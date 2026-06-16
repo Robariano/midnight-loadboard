@@ -117,7 +117,7 @@ export class PreprodTestEnvironment extends RemoteTestEnvironment {
       indexerWS: 'wss://indexer.preprod.midnight.network/api/v3/graphql/ws',
       node: 'https://rpc.preprod.midnight.network',
       nodeWS: 'wss://rpc.preprod.midnight.network',
-      faucet: 'https://faucet.preprod.midnight.network/api/request-tokens',
+      faucet: undefined,
       proofServer: this.getProofServerUrl(),
     };
   }

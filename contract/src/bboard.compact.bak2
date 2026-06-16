@@ -1,14 +1,10 @@
 pragma language_version >= 0.22;
+
 import CompactStandardLibrary;
 
 export enum State {
   VACANT,
   OCCUPIED
-}
-
-export enum CarrierStatus {
-  UNREGISTERED,
-  ACTIVE
 }
 
 export ledger state: State;
@@ -18,18 +14,12 @@ export ledger notes: Maybe<Opaque<'string'>>;
 export ledger ownerCommitment: Bytes<32>;
 export ledger sequence: Counter;
 
-export ledger carrierStatus: CarrierStatus;
-export ledger carrierCommitment: Bytes<32>;
-export ledger carrierSequence: Counter;
-
 constructor() {
   state = State.VACANT;
   loadNumber = none<Opaque<'string'>>();
   rate = 0;
   notes = none<Opaque<'string'>>();
   sequence.increment(1);
-  carrierStatus = CarrierStatus.UNREGISTERED;
-  carrierSequence.increment(1);
 }
 
 witness localSecretKey(): Bytes<32>;
@@ -51,32 +41,8 @@ export circuit postLoad(
   state = State.OCCUPIED;
 }
 
-export circuit registerCarrier(): [] {
-  assert(carrierStatus == CarrierStatus.UNREGISTERED, "Already registered as a carrier");
-  const sk = localSecretKey();
-  const seq = carrierSequence as Field as Bytes<32>;
-  carrierCommitment = disclose(
-    persistentHash<Vector<3, Bytes<32>>>([pad(32, "carrier:id:"), seq, sk])
-  );
-  carrierStatus = CarrierStatus.ACTIVE;
-}
-
-export circuit verifyCarrier(): Bytes<32> {
-  assert(carrierStatus == CarrierStatus.ACTIVE, "Not a registered carrier");
-  const sk = localSecretKey();
-  const seq = carrierSequence as Field as Bytes<32>;
-  const computed = persistentHash<Vector<3, Bytes<32>>>([pad(32, "carrier:id:"), seq, sk]);
-  assert(carrierCommitment == computed, "Carrier commitment mismatch");
-  return disclose(computed);
-}
-
 export circuit claimLoad(): Opaque<'string'> {
   assert(state == State.OCCUPIED, "No load available to claim");
-  assert(carrierStatus == CarrierStatus.ACTIVE, "Must be a registered carrier to claim a load");
-  const sk = localSecretKey();
-  const seq = carrierSequence as Field as Bytes<32>;
-  const computed = persistentHash<Vector<3, Bytes<32>>>([pad(32, "carrier:id:"), seq, sk]);
-  assert(carrierCommitment == computed, "Carrier commitment mismatch");
   const claimedLoad = loadNumber.value;
   state = State.VACANT;
   sequence.increment(1);
@@ -107,3 +73,4 @@ export circuit revealOwnership(): Bytes<32> {
   assert(ownerCommitment == computed, "Not the original shipper");
   return disclose(persistentHash<Vector<3, Bytes<32>>>([pad(32, "truckboard:pk:"), seq, sk]));
 }
+

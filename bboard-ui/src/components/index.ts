@@ -15,3 +15,6 @@
 
 export * from './Layout';
 export * from './Board';
+export * from './CarrierRegistry';
+export * from './LoadBoard';
+export * from './RevealOwnership';

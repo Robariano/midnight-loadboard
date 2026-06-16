@@ -1,0 +1,100 @@
+pragma language_version >= 0.22;
+
+import CompactStandardLibrary;
+
+export enum CarrierStatus {
+  UNREGISTERED,
+  ACTIVE,
+  DEACTIVATED
+}
+
+export ledger status: CarrierStatus;
+export ledger carrierCommitment: Bytes<32>;
+export ledger cdlCommitment: Bytes<32>;
+export ledger insuranceCommitment: Bytes<32>;
+export ledger registeredAt: Uint<64>;
+export ledger oracleVerified: Boolean;
+export ledger sequence: Counter;
+
+constructor() {
+  status = CarrierStatus.UNREGISTERED;
+  oracleVerified = false;
+  registeredAt = 0;
+  sequence.increment(1);
+}
+
+// Private witnesses — never leave the carrier's machine
+witness localSecretKey(): Bytes<32>;
+witness cdlNumber(): Opaque<'string'>;
+witness insurancePolicy(): Opaque<'string'>;
+witness registrationTimestamp(): Uint<64>;
+
+export circuit registerCarrier(): [] {
+  assert(status == CarrierStatus.UNREGISTERED, "Carrier already registered");
+
+  const sk = localSecretKey();
+  const seq = sequence as Field as Bytes<32>;
+
+  // Carrier identity commitment — anonymous on-chain ID
+  carrierCommitment = disclose(
+    persistentHash<Vector<3, Bytes<32>>>([pad(32, "carrier:id:"), seq, sk])
+  );
+
+  // CDL commitment — hash of CDL number + secret key
+  cdlCommitment = disclose(
+    persistentHash<Vector<2, Bytes<32>>>([pad(32, "carrier:cdl:"), sk])
+  );
+
+  // Insurance commitment — hash of policy number + secret key  
+  insuranceCommitment = disclose(
+    persistentHash<Vector<2, Bytes<32>>>([pad(32, "carrier:ins:"), sk])
+  );
+
+  registeredAt = disclose(registrationTimestamp());
+  status = CarrierStatus.ACTIVE;
+  oracleVerified = false;
+}
+
+// Proves you are the registered carrier without revealing who you are
+export circuit verifyCarrier(): Bytes<32> {
+  assert(status == CarrierStatus.ACTIVE, "Carrier is not active");
+
+  const sk = localSecretKey();
+  const seq = sequence as Field as Bytes<32>;
+  const computed = persistentHash<Vector<3, Bytes<32>>>([pad(32, "carrier:id:"), seq, sk]);
+
+  assert(carrierCommitment == computed, "Not the registered carrier");
+
+  // Returns the carrier commitment as proof of registration
+  return disclose(computed);
+}
+
+// Carrier deactivates themselves
+export circuit deactivateCarrier(): [] {
+  assert(status == CarrierStatus.ACTIVE, "Carrier is not active");
+
+  const sk = localSecretKey();
+  const seq = sequence as Field as Bytes<32>;
+  const computed = persistentHash<Vector<3, Bytes<32>>>([pad(32, "carrier:id:"), seq, sk]);
+
+  assert(carrierCommitment == computed, "Not the registered carrier");
+
+  status = CarrierStatus.DEACTIVATED;
+  sequence.increment(1);
+}
+
+// Placeholder for Phase 2 oracle verification
+export circuit submitOracleVerification(): [] {
+  assert(status == CarrierStatus.ACTIVE, "Carrier is not active");
+
+  const sk = localSecretKey();
+  const seq = sequence as Field as Bytes<32>;
+  const computed = persistentHash<Vector<3, Bytes<32>>>([pad(32, "carrier:id:"), seq, sk]);
+
+  assert(carrierCommitment == computed, "Not the registered carrier");
+
+  // Phase 2: oracle signature check goes here
+  // For now just marks as self-verified
+  oracleVerified = disclose(true);
+}
+

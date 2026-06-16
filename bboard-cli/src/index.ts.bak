@@ -27,7 +27,6 @@ import { syncWallet, waitForUnshieldedFunds } from './wallet-utils';
 import { generateDust } from './generate-dust';
 import { BBoardPrivateState } from '../../contract/src/witnesses.js';
 
-import { startApiServer, setDeployedAPI } from './api-server.js';
 // @ts-expect-error: It's needed to enable WebSocket usage through apollo
 globalThis.WebSocket = WebSocket;
 
@@ -110,16 +109,12 @@ You can do one of the following:
   4. Reveal your ownership (shipper only)
   5. Display the current ledger state (public)
   6. Display the current derived state (private)
-  --- Carrier Registry ---
-  7. Register as a carrier
-  8. Verify carrier status
-  9. Exit
+  7. Exit
 Which would you like to do? `;
 
 const mainLoop = async (providers: BBoardProviders, rli: Interface, logger: Logger): Promise<void> => {
   const bboardApi = await deployOrJoin(providers, rli, logger);
   if (bboardApi === null) return;
-  setDeployedAPI(bboardApi);
 
   let currentState: BBoardDerivedState | undefined;
   const subscription = bboardApi.state$.subscribe({ next: (state) => (currentState = state) });
@@ -155,16 +150,6 @@ const mainLoop = async (providers: BBoardProviders, rli: Interface, logger: Logg
             displayDerivedState(currentState, logger);
             break;
           case '7':
-            logger.info('registeringCarrier');
-            await bboardApi.registerCarrier();
-            logger.info('Registered as carrier successfully!');
-            break;
-          case '8':
-            logger.info('verifyingCarrier');
-            const proof = await bboardApi.verifyCarrier();
-            logger.info('Carrier verified! Commitment: ' + proof);
-            break;
-          case '9':
             logger.info('Exiting...');
             return;
           default:
@@ -234,7 +219,7 @@ export const run = async (config: Config, testEnv: TestEnvironment, logger: Logg
       }
     }
 
-    const zkConfigProvider = new NodeZkConfigProvider<'postLoad' | 'claimLoad' | 'takeDown' | 'revealOwnership' | 'registerCarrier' | 'verifyCarrier'>(config.zkConfigPath);
+    const zkConfigProvider = new NodeZkConfigProvider<'postLoad' | 'claimLoad' | 'takeDown' | 'revealOwnership'>(config.zkConfigPath);
     const providers: BBoardProviders = {
       privateStateProvider: levelPrivateStateProvider<PrivateStateId, BBoardPrivateState>({
         privateStateStoreName: config.privateStateStoreName,
@@ -248,7 +233,6 @@ export const run = async (config: Config, testEnv: TestEnvironment, logger: Logg
       walletProvider: walletProvider,
       midnightProvider: walletProvider,
     };
-    startApiServer();
     await mainLoop(providers, rli, logger);
   } catch (e) {
     logError(logger, e);
