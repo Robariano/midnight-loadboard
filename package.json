@@ -40,7 +40,7 @@
     "@midnight-ntwrk/wallet-sdk-shielded": "^2.0.0",
     "@midnight-ntwrk/wallet-sdk-unshielded-wallet": "^2.0.0",
     "@types/express": "^5.0.6",
-    "axios": "^1.15.0",
+    "axios": "^1.18.0",
     "buffer": "^6.0.3",
     "express": "^5.2.1",
     "fp-ts": "^2.16.11",
