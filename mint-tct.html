@@ -1,176 +1,231 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mint TCT · Midnight Loadboard Admin</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Mint TCT - Midnight Loadboard</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a14; color: #e2e8f0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
-.card { background: #1a1a2e; border: 1px solid #2a2a45; border-radius: 16px; padding: 2rem; width: 100%; max-width: 520px; }
-h1 { font-size: 1.4rem; font-weight: 800; color: #a78bfa; margin-bottom: 0.4rem; }
-.sub { color: #64748b; font-size: 0.88rem; margin-bottom: 2rem; }
-.field { margin-bottom: 1.2rem; }
-label { display: block; font-size: 0.8rem; color: #64748b; font-weight: 600; margin-bottom: 0.4rem; }
-input { width: 100%; background: #12121f; border: 1px solid #2a2a45; border-radius: 8px; padding: 0.65rem 0.9rem; color: #e2e8f0; font-size: 0.9rem; outline: none; }
-input:focus { border-color: #7c3aed; }
-.btn { width: 100%; padding: 0.75rem; border-radius: 8px; border: none; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.15s; margin-bottom: 0.8rem; }
-.btn-purple { background: #7c3aed; color: #fff; }
-.btn-purple:hover { background: #6d28d9; }
-.btn:disabled { opacity: 0.4; cursor: default; }
-.status { background: #12121f; border: 1px solid #2a2a45; border-radius: 8px; padding: 1rem; font-size: 0.85rem; line-height: 1.8; margin-top: 1rem; display: none; word-break: break-all; }
-.status.show { display: block; }
-.highlight { color: #10b981; font-weight: 700; font-family: monospace; }
-.error { color: #ef4444; }
-.warn { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 8px; padding: 0.8rem; font-size: 0.82rem; color: #f59e0b; margin-bottom: 1.5rem; }
+body{background:#0a0a12;color:#e0e0e0;font-family:Helvetica,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px}
+h1{font-size:24px;color:#fff;margin-bottom:8px}
+.policy{font-size:11px;color:#555;word-break:break-all;max-width:540px;margin:0 auto 32px}
+button{background:#5c5cff;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;padding:14px 32px;cursor:pointer;transition:background 0.15s}
+button:hover{background:#7070ff}
+button:disabled{background:#333;color:#666;cursor:not-allowed}
+#status{margin-top:24px;font-size:14px;min-height:24px;line-height:1.6;max-width:540px}
+.ok{color:#4caf50}
+.err{color:#cf6679}
+.tx{font-size:11px;word-break:break-all;background:#0f1a0f;border:1px solid #1d3a1d;border-radius:6px;padding:12px;margin-top:12px;color:#4caf50}
 </style>
 </head>
 <body>
-<div class="card">
-  <h1>🎖️ Mint Trucker Credential Token</h1>
-  <p class="sub">Admin tool · Preprod testnet only</p>
-  <div class="warn">
-    ⚠️ After minting, copy the <b>Policy ID</b> and paste into <code>index.html</code> as <code>CRED_POLICY_ID</code>.
-  </div>
-  <div class="field">
-    <label>Trucker Name (goes on-chain)</label>
-    <input type="text" id="trucker-name" value="Robert Ariano">
-  </div>
-  <button class="btn btn-purple" id="connect-btn" onclick="window._mintTCT()">Connect Wallet &amp; Mint TCT</button>
-  <div class="status" id="status"></div>
-</div>
+<h1>Mint TCT Token</h1>
+<div class="policy">Policy: 5235fad075cb36cc19084a3e97ae1fe61410bc7272578075f8491b0b</div>
+<button id="btn" onclick="mint()">Mint TCT with Lace</button>
+<div id="status"></div>
 
 <script>
-const BLOCKFROST_URL = 'https://cardano-preprod.blockfrost.io/api/v0';
-const BLOCKFROST_KEY = 'preprodIn7U7hLcUwtizoVFX1sYIOnPVCHI2HHf';
-const CSL_CDNS = [
-  'https://esm.sh/@emurgo/cardano-serialization-lib-browser',
-  'https://esm.sh/@emurgo/cardano-serialization-lib-browser@12.0.0',
-];
-function hexToBytes(hex) {
-  const b = new Uint8Array(hex.length/2);
-  for (let i=0;i<hex.length;i+=2) b[i/2]=parseInt(hex.slice(i,i+2),16);
-  return b;
+// ── No external libraries. Pure JS CBOR transaction builder. ──
+
+const POLICY_ID      = '5235fad075cb36cc19084a3e97ae1fe61410bc7272578075f8491b0b';
+const BF_URL         = 'https://cardano-preprod.blockfrost.io/api/v0';
+const BF_KEY         = 'preprodIn7U7hLcUwtizoVFX1sYIOnPVCHI2HHf';
+const TOKEN_LOVELACE = 2000000; // min-UTXO for token output (2 ADA)
+const FEE            = 200000;  // flat fee (0.2 ADA; safely above min for this tx)
+
+const fromHex = h => Uint8Array.from(h.match(/.{1,2}/g), b => parseInt(b,16));
+const toHex   = b => Array.from(b, x => x.toString(16).padStart(2,'0')).join('');
+
+// ── CBOR encoder ──────────────────────────────────────────────
+function cat(...a){
+  let n=0; for(const x of a) n+=x.length;
+  const r=new Uint8Array(n); let o=0;
+  for(const x of a){r.set(x,o);o+=x.length;}
+  return r;
 }
-function bytesToHex(b) {
-  return Array.from(b).map(x=>x.toString(16).padStart(2,'0')).join('');
+function hdr(maj,n){
+  const b=maj<<5;
+  if(n<24)      return new Uint8Array([b|n]);
+  if(n<256)     return new Uint8Array([b|24,n]);
+  if(n<65536)   return new Uint8Array([b|25,n>>8,n&0xff]);
+  return new Uint8Array([b|26,(n>>>24)&0xff,(n>>16)&0xff,(n>>8)&0xff,n&0xff]);
 }
-function errMsg(e) {
-  if (!e) return 'unknown error';
-  if (typeof e==='string') return e;
-  if (e.message) return e.message;
-  if (e.info) return String(e.info);
-  try { return JSON.stringify(e); } catch { return String(e); }
+const eu = n => hdr(0,n);
+const eb = b => cat(hdr(2,b.length), b);
+const ea = a => cat(hdr(4,a.length), ...a);
+const em = ps => cat(hdr(5,ps.length), ...ps.map(([k,v])=>cat(k,v)));
+// tagged set #6.258 (Conway sets)
+const es = a => cat(new Uint8Array([0xd9,0x01,0x02]), ea(a));
+// signed int (for mint quantity)
+const ei = n => { if(n>=0) return eu(n); const r=eu(-1-n); r[0]|=0x20; return r; };
+// CBOR simple values
+const CTRUE  = new Uint8Array([0xf5]);
+const CNULL  = new Uint8Array([0xf6]);
+
+// ── CBOR decoder (minimal – only needed to parse UTxO + witness set) ──
+function dec(buf, p){
+  const b=buf[p], maj=b>>5, inf=b&0x1f;
+  let n,e;
+  if(inf<24){n=inf;e=p+1;}
+  else if(inf===24){n=buf[p+1];e=p+2;}
+  else if(inf===25){n=(buf[p+1]<<8)|buf[p+2];e=p+3;}
+  else if(inf===26){n=(buf[p+1]*16777216)+(buf[p+2]<<16)+(buf[p+3]<<8)+buf[p+4];e=p+5;}
+  else if(inf===27){
+    n=Number((BigInt(buf[p+1])<<56n)|(BigInt(buf[p+2])<<48n)|(BigInt(buf[p+3])<<40n)|
+      (BigInt(buf[p+4])<<32n)|(BigInt(buf[p+5])<<24n)|(BigInt(buf[p+6])<<16n)|
+      (BigInt(buf[p+7])<<8n)|BigInt(buf[p+8]));e=p+9;}
+  else throw new Error('CBOR additional info '+inf+' not supported');
+  if(maj===0) return [n,e];
+  if(maj===1) return [-(n+1),e];
+  if(maj===2) return [buf.slice(e,e+n),e+n];
+  if(maj===3) return [new TextDecoder().decode(buf.slice(e,e+n)),e+n];
+  if(maj===4){const r=[];let p2=e;for(let i=0;i<n;i++){const[v,p3]=dec(buf,p2);r.push(v);p2=p3;}return[r,p2];}
+  if(maj===5){const r={};let p2=e;for(let i=0;i<n;i++){const[k,p3]=dec(buf,p2);const[v,p4]=dec(buf,p3);r[k]=v;p2=p4;}return[r,p2];}
+  if(maj===6) return dec(buf,e); // skip tag, decode inner
+  throw new Error('CBOR major type '+maj+' not supported');
 }
-const $s = () => document.getElementById('status');
-function log(msg, cls='') {
-  const el=$s(); el.classList.add('show');
-  el.innerHTML += '<div'+(cls?' class="'+cls+'"':'')+'>'+msg+'</div>';
-}
-function setBtn(t,d=false){const b=document.getElementById('connect-btn');b.textContent=t;b.disabled=d;}
-async function bf(path) {
-  const r=await fetch(BLOCKFROST_URL+path,{headers:{project_id:BLOCKFROST_KEY}});
-  if(!r.ok){let d=r.statusText;try{const j=await r.json();d=j.message||j.error||d;}catch{}throw new Error('Blockfrost '+path+': '+r.status+' - '+d);}
+function cborDecode(hex){ return dec(fromHex(hex),0)[0]; }
+
+// ── Blockfrost helper ─────────────────────────────────────────
+async function bf(path){
+  const r=await fetch(BF_URL+path,{headers:{'project_id':BF_KEY}});
+  if(!r.ok) throw new Error('Blockfrost '+path+': HTTP '+r.status);
   return r.json();
 }
-async function loadCSL() {
-  for (const cdnUrl of CSL_CDNS) {
-    try {
-      const host = new URL(cdnUrl).hostname;
-      log('  -> fetching from ' + host + '...');
-      const resp = await fetch(cdnUrl);
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-      const text = await resp.text();
-      log('  -> ' + Math.round(text.length/1024) + 'KB loaded, importing via blob...');
-      const blob = new Blob([text], { type: 'text/javascript' });
-      const blobUrl = URL.createObjectURL(blob);
-      const mod = await import(blobUrl);
-      URL.revokeObjectURL(blobUrl);
-      if (typeof mod.default === 'function') await mod.default();
-      if (!mod.BigNum) throw new Error('BigNum not found');
-      log('OK CSL ready from ' + host);
-      return mod;
-    } catch(e) {
-      log('  x ' + errMsg(e));
-    }
-  }
-  throw new Error('All CDNs failed.');
+
+function setStatus(msg,cls){
+  const el=document.getElementById('status');
+  el.innerHTML=msg; el.className=cls||'';
 }
-window._mintTCT = async function () {
-  setBtn('Working...', true);
-  $s().innerHTML = '';
-  $s().classList.add('show');
-  try {
-    log('Loading Cardano Serialization Lib...');
-    const CSL = await loadCSL();
-    log('Looking for Cardano wallet...');
-    const cardano = window.cardano || {};
-    const wKey = ['lace','eternl','nami','flint','yoroi'].find(k=>cardano[k]?.enable)??Object.keys(cardano).find(k=>typeof cardano[k]?.enable==='function');
-    if (!wKey) throw new Error('No Cardano wallet found.');
-    const api = await cardano[wKey].enable();
-    log('OK ' + wKey + ' connected');
-    const usedAddrs = await api.getUsedAddresses();
-    const unusedAddrs = await api.getUnusedAddresses();
-    const addrHex = (usedAddrs&&usedAddrs.length)?usedAddrs[0]:(unusedAddrs&&unusedAddrs[0]);
-    if (!addrHex) throw new Error('Wallet returned no addresses');
-    const addr = CSL.Address.from_bytes(hexToBytes(addrHex));
-    const addrBech32 = addr.to_bech32();
-    log('OK Address: ' + addrBech32.slice(0,22) + '...');
-    const baseAddr = CSL.BaseAddress.from_address(addr);
-    if (!baseAddr) throw new Error('Address is not a base address');
-    const pkh = baseAddr.payment_cred().to_keyhash();
-    const nativeScript = CSL.NativeScript.new_script_pubkey(CSL.ScriptPubkey.new(pkh));
-    const policyId = bytesToHex(nativeScript.hash(CSL.ScriptHashNamespace.NativeScript).to_bytes());
-    log('Policy ID: ' + policyId);
-    const truckerName = document.getElementById('trucker-name').value.trim()||'Robert';
-    const tokenNameStr = 'TCT-'+truckerName;
-    const assetName = CSL.AssetName.new(new TextEncoder().encode(tokenNameStr));
-    log('Token: ' + tokenNameStr);
-    log('Fetching UTxOs...');
-    const [utxosData,params] = await Promise.all([bf('/addresses/'+addrBech32+'/utxos'),bf('/epochs/latest/parameters')]);
-    if (!utxosData||!utxosData.length) throw new Error('No UTxOs. Send tADA first.');
-    log('OK ' + utxosData.length + ' UTxO(s)');
-    log('Building transaction...');
-    const coinsPerByte = CSL.BigNum.from_str((params.coins_per_utxo_size||params.coins_per_utxo_word||4310).toString());
-    let cfgBuilder = CSL.TransactionBuilderConfigBuilder.new()
-      .fee_algo(CSL.LinearFee.new(CSL.BigNum.from_str(params.min_fee_a.toString()),CSL.BigNum.from_str(params.min_fee_b.toString())))
-      .pool_deposit(CSL.BigNum.from_str((params.pool_deposit||500000000).toString()))
-      .key_deposit(CSL.BigNum.from_str((params.key_deposit||2000000).toString()))
-      .max_value_size(parseInt(params.max_val_size||5000))
-      .max_tx_size(parseInt(params.max_tx_size||16384));
-    try{cfgBuilder=cfgBuilder.coins_per_utxo_byte(coinsPerByte);}catch{cfgBuilder=cfgBuilder.coins_per_utxo_word(coinsPerByte);}
-    const txBuilder = CSL.TransactionBuilder.new(cfgBuilder.build());
-    const unspentOutputs = CSL.TransactionUnspentOutputs.new();
-    for (const u of utxosData) {
-      const lovelace=(u.amount.find(a=>a.unit==='lovelace')||{}).quantity||'0';
-      unspentOutputs.add(CSL.TransactionUnspentOutput.new(CSL.TransactionInput.new(CSL.TransactionHash.from_bytes(hexToBytes(u.tx_hash)),u.output_index),CSL.TransactionOutput.new(addr,CSL.Value.new(CSL.BigNum.from_str(lovelace)))));
+
+// ── Parse one UTxO hex → {txHash, txIndex, lovelace, pureAda} ─
+function parseUtxo(hex){
+  const u=cborDecode(hex);
+  // u is [input, output] where input=[hash,idx], output=[addr,value] or {0:addr,1:value}
+  const [input,output]=u;
+  const [txHash,txIndex]=input;
+  const val = Array.isArray(output) ? output[1] : output[1];
+  let lovelace, pureAda;
+  if(typeof val==='number'){lovelace=val;pureAda=true;}
+  else if(Array.isArray(val)){lovelace=val[0];pureAda=false;}
+  else{lovelace=0;pureAda=false;}
+  return{txHash,txIndex,lovelace,pureAda};
+}
+
+// ── Main mint function ────────────────────────────────────────
+async function mint(){
+  const btn=document.getElementById('btn');
+  btn.disabled=true;
+  try{
+    if(!window.cardano?.lace) throw new Error('Lace wallet not found. Install Lace and switch to Preprod.');
+    setStatus('Connecting to Lace…');
+    const api=await window.cardano.lace.enable();
+
+    // ── Address & PKH ──
+    setStatus('Getting wallet address…');
+    const changeAddrHex=await api.getChangeAddress();
+    const addrBytes=fromHex(changeAddrHex);
+    if(addrBytes.length<29) throw new Error('Address too short — unexpected format');
+    const pkh=addrBytes.slice(1,29); // PKH is always bytes 1-28
+    setStatus('PKH: '+toHex(pkh));
+
+    // Native script CBOR: [0, pkh_bytes]  (ScriptPubkey)
+    const nativeScriptCbor=ea([eu(0),eb(pkh)]);
+
+    // ── Pick best UTxO ──
+    setStatus('Scanning UTxOs…');
+    const rawUtxos=await api.getUtxos();
+    if(!rawUtxos?.length) throw new Error('No UTxOs in wallet');
+
+    let best=null;
+    for(const raw of rawUtxos){
+      try{
+        const u=parseUtxo(raw);
+        // Prefer pure-ADA UTxOs; pick largest lovelace
+        if(u.pureAda && (!best||u.lovelace>best.lovelace)) best=u;
+      }catch(_){}
     }
-    let strat=CSL.CoinSelectionStrategyCIP2.LargestFirstMultiAsset;
-    if(strat===undefined)strat=CSL.CoinSelectionStrategyCIP2.LargestFirst;
-    txBuilder.add_inputs_from(unspentOutputs,strat);
-    const mintBuilder=CSL.MintBuilder.new();
-    mintBuilder.add_asset(CSL.MintWitness.new_native_script(nativeScript),assetName,CSL.Int.new_i32(1));
-    txBuilder.set_mint_builder(mintBuilder);
-    txBuilder.add_required_signer(pkh);
-    txBuilder.add_change_if_needed(addr);
-    const txBody=txBuilder.build();
-    log('Requesting wallet signature...');
-    setBtn('Sign in Lace...',true);
-    const emptyTx=CSL.Transaction.new(txBody,CSL.TransactionWitnessSet.new());
-    const witnessHex=await api.signTx(bytesToHex(emptyTx.to_bytes()),true);
-    const signedTx=CSL.Transaction.new(txBody,CSL.TransactionWitnessSet.from_bytes(hexToBytes(witnessHex)));
-    log('Submitting...');
-    setBtn('Submitting...',true);
-    const txHash=await api.submitTx(bytesToHex(signedTx.to_bytes()));
-    log('TCT MINTED! TX: ' + txHash);
-    log('CRED_POLICY_ID = "' + policyId + '"  <- paste into index.html');
-    setBtn('Done!',true);
-  } catch(e) {
-    log('ERROR: '+errMsg(e),'error');
-    console.error(e);
-    setBtn('Retry',false);
+    if(!best){
+      // Fall back to any UTxO if no pure-ADA found
+      for(const raw of rawUtxos){
+        try{
+          const u=parseUtxo(raw);
+          if(!best||u.lovelace>best.lovelace) best=u;
+        }catch(_){}
+      }
+    }
+    if(!best) throw new Error('Could not parse any UTxO');
+    const needed=TOKEN_LOVELACE+FEE+1000000;
+    if(best.lovelace<needed)
+      throw new Error('Need >'+(needed/1e6).toFixed(2)+' ADA in one UTxO. Largest found: '+(best.lovelace/1e6).toFixed(2)+' ADA');
+
+    const change=best.lovelace-TOKEN_LOVELACE-FEE;
+    setStatus(
+      'Using UTxO: '+toHex(best.txHash)+'#'+best.txIndex+
+      '<br>ADA in: '+(best.lovelace/1e6).toFixed(2)+
+      '  Fee: '+(FEE/1e6)+
+      '  Change: '+(change/1e6).toFixed(2)
+    );
+
+    // ── Encode transaction ──
+    const policyIdBytes=fromHex(POLICY_ID);
+    const assetName=new TextEncoder().encode('TCT');
+
+    // Input: [txHash, txIndex]
+    const txIn=ea([eb(best.txHash),eu(best.txIndex)]);
+
+    // Token output value: [lovelace, {policyId: {assetName: 1}}]
+    const tokenValue=ea([
+      eu(TOKEN_LOVELACE),
+      em([[eb(policyIdBytes), em([[eb(assetName),eu(1)]])]])
+    ]);
+    const tokenOut=ea([eb(addrBytes),tokenValue]);
+
+    // Change output: [addr, lovelace]
+    const changeOut=ea([eb(addrBytes),eu(change)]);
+
+    // Mint: {policyId: {assetName: 1}}
+    const mintField=em([[eb(policyIdBytes), em([[eb(assetName),ei(1)]])]]);
+
+    // Tx body map: {0:[inputs], 1:[outputs], 2:fee, 9:mint}
+    const txBody=em([
+      [eu(0), ea([txIn])],       // inputs as plain array (Babbage-compat)
+      [eu(1), ea([tokenOut,changeOut])],
+      [eu(2), eu(FEE)],
+      [eu(9), mintField]
+    ]);
+
+    // Unsigned tx: [body, {}, true, null]
+    const unsignedTx=ea([txBody, em([]), CTRUE, CNULL]);
+
+    // ── Sign ──
+    setStatus('Please approve in Lace…');
+    const witHex=await api.signTx(toHex(unsignedTx), true); // true = partial
+
+    // Parse returned witness set {0: [[vkey,sig],...]}
+    const retWit=cborDecode(witHex);
+    const vkeyWits=retWit[0]; // array of [vkey_bytes, sig_bytes]
+
+    // Build final witness set: {0: #6.258([[vkey,sig]]), 1: [nativeScript]}
+    const witPairs=[];
+    if(vkeyWits?.length){
+      witPairs.push([eu(0), es(vkeyWits.map(([vk,sg])=>ea([eb(vk),eb(sg)])))]);
+    }
+    witPairs.push([eu(1), ea([nativeScriptCbor])]);
+    const finalWit=em(witPairs);
+
+    // Final tx: [body, witnessSet, true, null]
+    const finalTx=ea([txBody, finalWit, CTRUE, CNULL]);
+
+    // ── Submit ──
+    setStatus('Submitting…');
+    const txHash=await api.submitTx(toHex(finalTx));
+    setStatus('✓ TCT minted!<div class="tx">TX: '+txHash+'</div>','ok');
+
+  }catch(e){
+    setStatus('Error: '+(e.message||String(e)),'err');
+    btn.disabled=false;
   }
-};
+}
 </script>
 </body>
 </html>
