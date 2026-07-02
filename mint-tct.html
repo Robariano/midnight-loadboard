@@ -123,9 +123,22 @@ async function mint(){
     // ── Address & PKH ──
     setStatus('Getting wallet address…');
     const changeAddrHex=await api.getChangeAddress();
-    const addrBytes=fromHex(changeAddrHex);
-    if(addrBytes.length<29) throw new Error('Address too short — unexpected format');
-    const pkh=addrBytes.slice(1,29); // PKH is always bytes 1-28
+    // Lace CIP-30 returns CBOR-encoded addresses (byte string wrapper).
+    // Raw Cardano address headers are 0x00,0x01,0x20,0x21,0x40,0x41,0x60,0x61 etc.
+    // CBOR byte-string prefix for 29-57 byte addresses is 0x58 or 0x59 — never a valid addr header.
+    // So: if first byte is 0x58/0x59, CBOR-decode to get raw bytes; otherwise already raw.
+    let addrBytes;
+    {
+      const fb=parseInt(changeAddrHex.slice(0,2),16);
+      if(fb===0x58||fb===0x59){
+        const decoded=cborDecode(changeAddrHex);
+        addrBytes=(decoded instanceof Uint8Array)?decoded:fromHex(changeAddrHex);
+      } else {
+        addrBytes=fromHex(changeAddrHex);
+      }
+    }
+    if(addrBytes.length<29) throw new Error('Address too short — '+addrBytes.length+' bytes');
+    const pkh=addrBytes.slice(1,29); // PKH is always bytes 1-28 of raw address
     setStatus('PKH: '+toHex(pkh));
 
     // Native script CBOR: [0, pkh_bytes]  (ScriptPubkey)
@@ -205,27 +218,4 @@ async function mint(){
     const retWit=cborDecode(witHex);
     const vkeyWits=retWit[0]; // array of [vkey_bytes, sig_bytes]
 
-    // Build final witness set: {0: #6.258([[vkey,sig]]), 1: [nativeScript]}
-    const witPairs=[];
-    if(vkeyWits?.length){
-      witPairs.push([eu(0), es(vkeyWits.map(([vk,sg])=>ea([eb(vk),eb(sg)])))]);
-    }
-    witPairs.push([eu(1), ea([nativeScriptCbor])]);
-    const finalWit=em(witPairs);
-
-    // Final tx: [body, witnessSet, true, null]
-    const finalTx=ea([txBody, finalWit, CTRUE, CNULL]);
-
-    // ── Submit ──
-    setStatus('Submitting…');
-    const txHash=await api.submitTx(toHex(finalTx));
-    setStatus('✓ TCT minted!<div class="tx">TX: '+txHash+'</div>','ok');
-
-  }catch(e){
-    setStatus('Error: '+(e.message||String(e)),'err');
-    btn.disabled=false;
-  }
-}
-</script>
-</body>
-</html>
+    // Build final witness set: {0: #6.258([[vkey,sig]]), 1: [nativeScr
