@@ -29,13 +29,13 @@ button:disabled{background:#333;color:#666;cursor:not-allowed}
 const POLICY_ID      = '5235fad075cb36cc19084a3e97ae1fe61410bc7272578075f8491b0b';
 const BF_URL         = 'https://cardano-preprod.blockfrost.io/api/v0';
 const BF_KEY         = 'preprodIn7U7hLcUwtizoVFX1sYIOnPVCHI2HHf';
-const TOKEN_LOVELACE = 2000000; // min-UTXO for token output (2 ADA)
-const FEE            = 200000;  // flat fee (0.2 ADA; safely above min for this tx)
+const TOKEN_LOVELACE = 2000000;
+const FEE            = 200000;
 
 const fromHex = h => Uint8Array.from(h.match(/.{1,2}/g), b => parseInt(b,16));
 const toHex   = b => Array.from(b, x => x.toString(16).padStart(2,'0')).join('');
 
-// ── CBOR encoder ──────────────────────────────────────────────
+// ── CBOR encoder ──
 function cat(...a){
   let n=0; for(const x of a) n+=x.length;
   const r=new Uint8Array(n); let o=0;
@@ -44,24 +44,21 @@ function cat(...a){
 }
 function hdr(maj,n){
   const b=maj<<5;
-  if(n<24)      return new Uint8Array([b|n]);
-  if(n<256)     return new Uint8Array([b|24,n]);
-  if(n<65536)   return new Uint8Array([b|25,n>>8,n&0xff]);
+  if(n<24)    return new Uint8Array([b|n]);
+  if(n<256)   return new Uint8Array([b|24,n]);
+  if(n<65536) return new Uint8Array([b|25,n>>8,n&0xff]);
   return new Uint8Array([b|26,(n>>>24)&0xff,(n>>16)&0xff,(n>>8)&0xff,n&0xff]);
 }
 const eu = n => hdr(0,n);
 const eb = b => cat(hdr(2,b.length), b);
 const ea = a => cat(hdr(4,a.length), ...a);
 const em = ps => cat(hdr(5,ps.length), ...ps.map(([k,v])=>cat(k,v)));
-// tagged set #6.258 (Conway sets)
-const es = a => cat(new Uint8Array([0xd9,0x01,0x02]), ea(a));
-// signed int (for mint quantity)
+const es = a => cat(new Uint8Array([0xd9,0x01,0x02]), ea(a)); // #6.258 tagged set
 const ei = n => { if(n>=0) return eu(n); const r=eu(-1-n); r[0]|=0x20; return r; };
-// CBOR simple values
-const CTRUE  = new Uint8Array([0xf5]);
-const CNULL  = new Uint8Array([0xf6]);
+const CTRUE = new Uint8Array([0xf5]);
+const CNULL = new Uint8Array([0xf6]);
 
-// ── CBOR decoder (minimal – only needed to parse UTxO + witness set) ──
+// ── CBOR decoder ──
 function dec(buf, p){
   const b=buf[p], maj=b>>5, inf=b&0x1f;
   let n,e;
@@ -73,19 +70,26 @@ function dec(buf, p){
     n=Number((BigInt(buf[p+1])<<56n)|(BigInt(buf[p+2])<<48n)|(BigInt(buf[p+3])<<40n)|
       (BigInt(buf[p+4])<<32n)|(BigInt(buf[p+5])<<24n)|(BigInt(buf[p+6])<<16n)|
       (BigInt(buf[p+7])<<8n)|BigInt(buf[p+8]));e=p+9;}
-  else throw new Error('CBOR additional info '+inf+' not supported');
+  else throw new Error('CBOR inf '+inf);
   if(maj===0) return [n,e];
   if(maj===1) return [-(n+1),e];
   if(maj===2) return [buf.slice(e,e+n),e+n];
   if(maj===3) return [new TextDecoder().decode(buf.slice(e,e+n)),e+n];
   if(maj===4){const r=[];let p2=e;for(let i=0;i<n;i++){const[v,p3]=dec(buf,p2);r.push(v);p2=p3;}return[r,p2];}
   if(maj===5){const r={};let p2=e;for(let i=0;i<n;i++){const[k,p3]=dec(buf,p2);const[v,p4]=dec(buf,p3);r[k]=v;p2=p4;}return[r,p2];}
-  if(maj===6) return dec(buf,e); // skip tag, decode inner
-  throw new Error('CBOR major type '+maj+' not supported');
+  if(maj===6) return dec(buf,e);
+  throw new Error('CBOR maj '+maj);
 }
 function cborDecode(hex){ return dec(fromHex(hex),0)[0]; }
 
-// ── Blockfrost helper ─────────────────────────────────────────
+// ── Decode CIP-30 address (raw bytes or CBOR-wrapped) ──
+function decodeAddr(hex){
+  const fb=parseInt(hex.slice(0,2),16);
+  if(fb===0x58||fb===0x59){const d=cborDecode(hex);return(d instanceof Uint8Array)?d:fromHex(hex);}
+  return fromHex(hex);
+}
+
+// ── Blockfrost ──
 async function bf(path){
   const r=await fetch(BF_URL+path,{headers:{'project_id':BF_KEY}});
   if(!r.ok) throw new Error('Blockfrost '+path+': HTTP '+r.status);
@@ -97,21 +101,20 @@ function setStatus(msg,cls){
   el.innerHTML=msg; el.className=cls||'';
 }
 
-// ── Parse one UTxO hex → {txHash, txIndex, lovelace, pureAda} ─
+// ── Parse UTxO ──
 function parseUtxo(hex){
   const u=cborDecode(hex);
-  // u is [input, output] where input=[hash,idx], output=[addr,value] or {0:addr,1:value}
   const [input,output]=u;
   const [txHash,txIndex]=input;
-  const val = Array.isArray(output) ? output[1] : output[1];
-  let lovelace, pureAda;
+  const val=Array.isArray(output)?output[1]:output[1];
+  let lovelace,pureAda;
   if(typeof val==='number'){lovelace=val;pureAda=true;}
   else if(Array.isArray(val)){lovelace=val[0];pureAda=false;}
   else{lovelace=0;pureAda=false;}
   return{txHash,txIndex,lovelace,pureAda};
 }
 
-// ── Main mint function ────────────────────────────────────────
+// ── Main mint function ──
 async function mint(){
   const btn=document.getElementById('btn');
   btn.disabled=true;
@@ -120,52 +123,45 @@ async function mint(){
     setStatus('Connecting to Lace…');
     const api=await window.cardano.lace.enable();
 
-    // ── Address & PKH ──
-    // The policy ID 5235fad... was derived from the FIRST USED/RECEIVE address (not change).
-    // getChangeAddress() uses the internal HD chain (different key) — wrong for policy.
-    // Match original CSL code which used getUsedAddresses()[0] first.
+    // ── Get addresses ──
+    // Policy 5235fad... was derived from the FIRST USED/RECEIVE address (external HD chain).
+    // getChangeAddress() uses the internal HD chain — different key, wrong policy.
+    // Match original CSL code: usedAddresses[0] → unusedAddresses[0] → changeAddress
     setStatus('Getting wallet addresses…');
-    const usedAddrs  = await api.getUsedAddresses();
-    const unusedAddrs= await api.getUnusedAddresses();
-    const changeAddrHex= await api.getChangeAddress();
+    const usedAddrs   = await api.getUsedAddresses();
+    const unusedAddrs = await api.getUnusedAddresses();
+    const changeHex   = await api.getChangeAddress();
 
-    // Address to derive PKH from (receive/used first, matching original minting code)
-    const pkhSrcHex=(usedAddrs&&usedAddrs.length)?usedAddrs[0]
-                   :(unusedAddrs&&unusedAddrs.length)?unusedAddrs[0]
-                   :changeAddrHex;
+    const pkhSrcHex = (usedAddrs&&usedAddrs.length)   ? usedAddrs[0]
+                    : (unusedAddrs&&unusedAddrs.length) ? unusedAddrs[0]
+                    : changeHex;
 
-    // Decode address — handle both raw bytes and CBOR byte-string wrapper (0x58/0x59 prefix)
-    function decodeAddr(hex){
-      const fb=parseInt(hex.slice(0,2),16);
-      if(fb===0x58||fb===0x59){const d=cborDecode(hex);return(d instanceof Uint8Array)?d:fromHex(hex);}
-      return fromHex(hex);
-    }
-    const pkhAddrBytes =decodeAddr(pkhSrcHex);
-    const changeBytes  =decodeAddr(changeAddrHex);
+    const pkhAddrBytes = decodeAddr(pkhSrcHex);
+    const changeBytes  = decodeAddr(changeHex);
 
-    if(pkhAddrBytes.length<29) throw new Error('PKH address too short: '+pkhAddrBytes.length+' bytes');
-    const pkh=pkhAddrBytes.slice(1,29); // bytes 1-28 = payment key hash
-    setStatus('PKH src: '+(usedAddrs&&usedAddrs.length?'usedAddr[0]':(unusedAddrs&&unusedAddrs.length?'unusedAddr[0]':'changeAddr'))
-      +'<br>PKH: '+toHex(pkh));
+    if(pkhAddrBytes.length<29) throw new Error('PKH addr too short: '+pkhAddrBytes.length);
+    const pkh = pkhAddrBytes.slice(1,29);
 
-    // Native script CBOR: [0, pkh_bytes]  (ScriptPubkey)
-    const nativeScriptCbor=ea([eu(0),eb(pkh)]);
+    const pkhSrc = (usedAddrs&&usedAddrs.length)?'usedAddr[0]'
+                 : (unusedAddrs&&unusedAddrs.length)?'unusedAddr[0]':'changeAddr';
+    setStatus('PKH src: '+pkhSrc+'<br>PKH: '+toHex(pkh));
+
+    // Native script CBOR: [0, pkh_bytes]
+    const nativeScriptCbor = ea([eu(0), eb(pkh)]);
 
     // ── Pick best UTxO ──
     setStatus('Scanning UTxOs…');
-    const rawUtxos=await api.getUtxos();
+    const rawUtxos = await api.getUtxos();
     if(!rawUtxos?.length) throw new Error('No UTxOs in wallet');
 
     let best=null;
     for(const raw of rawUtxos){
       try{
         const u=parseUtxo(raw);
-        // Prefer pure-ADA UTxOs; pick largest lovelace
-        if(u.pureAda && (!best||u.lovelace>best.lovelace)) best=u;
+        if(u.pureAda&&(!best||u.lovelace>best.lovelace)) best=u;
       }catch(_){}
     }
     if(!best){
-      // Fall back to any UTxO if no pure-ADA found
       for(const raw of rawUtxos){
         try{
           const u=parseUtxo(raw);
@@ -176,35 +172,64 @@ async function mint(){
     if(!best) throw new Error('Could not parse any UTxO');
     const needed=TOKEN_LOVELACE+FEE+1000000;
     if(best.lovelace<needed)
-      throw new Error('Need >'+(needed/1e6).toFixed(2)+' ADA in one UTxO. Largest found: '+(best.lovelace/1e6).toFixed(2)+' ADA');
+      throw new Error('Need >'+(needed/1e6).toFixed(2)+' ADA. Largest UTxO: '+(best.lovelace/1e6).toFixed(2)+' ADA');
 
     const change=best.lovelace-TOKEN_LOVELACE-FEE;
-    setStatus(
-      'Using UTxO: '+toHex(best.txHash)+'#'+best.txIndex+
-      '<br>ADA in: '+(best.lovelace/1e6).toFixed(2)+
-      '  Fee: '+(FEE/1e6)+
-      '  Change: '+(change/1e6).toFixed(2)
-    );
+    setStatus('UTxO: '+toHex(best.txHash)+'#'+best.txIndex
+      +'<br>ADA: '+(best.lovelace/1e6).toFixed(2)
+      +'  Fee: '+(FEE/1e6)
+      +'  Change: '+(change/1e6).toFixed(2));
 
-    // ── Encode transaction ──
-    const policyIdBytes=fromHex(POLICY_ID);
-    const assetName=new TextEncoder().encode('TCT');
+    // ── Build transaction ──
+    const policyIdBytes = fromHex(POLICY_ID);
+    const assetName     = new TextEncoder().encode('TCT');
 
-    // Input: [txHash, txIndex]
-    const txIn=ea([eb(best.txHash),eu(best.txIndex)]);
-
-    // Token output value: [lovelace, {policyId: {assetName: 1}}]
-    const tokenValue=ea([
+    const txIn      = ea([eb(best.txHash), eu(best.txIndex)]);
+    const tokenValue = ea([
       eu(TOKEN_LOVELACE),
       em([[eb(policyIdBytes), em([[eb(assetName),eu(1)]])]])
     ]);
-    const tokenOut=ea([eb(pkhAddrBytes),tokenValue]); // token → receive address
+    const tokenOut  = ea([eb(pkhAddrBytes), tokenValue]); // token → receive address
+    const changeOut = ea([eb(changeBytes),  eu(change)]);  // change → change address
+    const mintField = em([[eb(policyIdBytes), em([[eb(assetName),ei(1)]])]]);
 
-    // Change output: [addr, lovelace]
-    const changeOut=ea([eb(changeBytes),eu(change)]); // change → change address
+    // required_signers (field 14) forces Lace to sign with the receive-address key
+    const txBody = em([
+      [eu(0),  ea([txIn])],
+      [eu(1),  ea([tokenOut, changeOut])],
+      [eu(2),  eu(FEE)],
+      [eu(9),  mintField],
+      [eu(14), es([eb(pkh)])]
+    ]);
 
-    // Mint: {policyId: {assetName: 1}}
-    const mintField=em([[eb(policyIdBytes), em([[eb(assetName),ei(1)]])]]);
+    const unsignedTx = ea([txBody, em([]), CTRUE, CNULL]);
 
-    // Tx body map: {0:[inputs], 1:[outputs], 2:fee, 9:mint, 14:required_signers}
-    // Field 14 forces Lace to include the receive-address key signature (needed by native script)
+    // ── Sign ──
+    setStatus('Please approve in Lace…');
+    const witHex = await api.signTx(toHex(unsignedTx), true);
+
+    const retWit  = cborDecode(witHex);
+    const vkeyWits = retWit[0];
+
+    const witPairs = [];
+    if(vkeyWits?.length){
+      witPairs.push([eu(0), es(vkeyWits.map(([vk,sg])=>ea([eb(vk),eb(sg)])))]);
+    }
+    witPairs.push([eu(1), ea([nativeScriptCbor])]);
+    const finalWit = em(witPairs);
+    const finalTx  = ea([txBody, finalWit, CTRUE, CNULL]);
+
+    // ── Submit ──
+    setStatus('Submitting…');
+    const txHash = await api.submitTx(toHex(finalTx));
+    setStatus('✓ TCT minted!<div class="tx">TX: '+txHash+'</div>','ok');
+
+  }catch(e){
+    setStatus('Error: '+(e.message||String(e)),'err');
+    btn.disabled=false;
+  }
+}
+</script>
+</body>
+</html>
+                                                                                                                                                                                                                                                                                            
