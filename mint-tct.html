@@ -121,25 +121,32 @@ async function mint(){
     const api=await window.cardano.lace.enable();
 
     // ── Address & PKH ──
-    setStatus('Getting wallet address…');
-    const changeAddrHex=await api.getChangeAddress();
-    // Lace CIP-30 returns CBOR-encoded addresses (byte string wrapper).
-    // Raw Cardano address headers are 0x00,0x01,0x20,0x21,0x40,0x41,0x60,0x61 etc.
-    // CBOR byte-string prefix for 29-57 byte addresses is 0x58 or 0x59 — never a valid addr header.
-    // So: if first byte is 0x58/0x59, CBOR-decode to get raw bytes; otherwise already raw.
-    let addrBytes;
-    {
-      const fb=parseInt(changeAddrHex.slice(0,2),16);
-      if(fb===0x58||fb===0x59){
-        const decoded=cborDecode(changeAddrHex);
-        addrBytes=(decoded instanceof Uint8Array)?decoded:fromHex(changeAddrHex);
-      } else {
-        addrBytes=fromHex(changeAddrHex);
-      }
+    // The policy ID 5235fad... was derived from the FIRST USED/RECEIVE address (not change).
+    // getChangeAddress() uses the internal HD chain (different key) — wrong for policy.
+    // Match original CSL code which used getUsedAddresses()[0] first.
+    setStatus('Getting wallet addresses…');
+    const usedAddrs  = await api.getUsedAddresses();
+    const unusedAddrs= await api.getUnusedAddresses();
+    const changeAddrHex= await api.getChangeAddress();
+
+    // Address to derive PKH from (receive/used first, matching original minting code)
+    const pkhSrcHex=(usedAddrs&&usedAddrs.length)?usedAddrs[0]
+                   :(unusedAddrs&&unusedAddrs.length)?unusedAddrs[0]
+                   :changeAddrHex;
+
+    // Decode address — handle both raw bytes and CBOR byte-string wrapper (0x58/0x59 prefix)
+    function decodeAddr(hex){
+      const fb=parseInt(hex.slice(0,2),16);
+      if(fb===0x58||fb===0x59){const d=cborDecode(hex);return(d instanceof Uint8Array)?d:fromHex(hex);}
+      return fromHex(hex);
     }
-    if(addrBytes.length<29) throw new Error('Address too short — '+addrBytes.length+' bytes');
-    const pkh=addrBytes.slice(1,29); // PKH is always bytes 1-28 of raw address
-    setStatus('PKH: '+toHex(pkh));
+    const pkhAddrBytes =decodeAddr(pkhSrcHex);
+    const changeBytes  =decodeAddr(changeAddrHex);
+
+    if(pkhAddrBytes.length<29) throw new Error('PKH address too short: '+pkhAddrBytes.length+' bytes');
+    const pkh=pkhAddrBytes.slice(1,29); // bytes 1-28 = payment key hash
+    setStatus('PKH src: '+(usedAddrs&&usedAddrs.length?'usedAddr[0]':(unusedAddrs&&unusedAddrs.length?'unusedAddr[0]':'changeAddr'))
+      +'<br>PKH: '+toHex(pkh));
 
     // Native script CBOR: [0, pkh_bytes]  (ScriptPubkey)
     const nativeScriptCbor=ea([eu(0),eb(pkh)]);
@@ -191,31 +198,13 @@ async function mint(){
       eu(TOKEN_LOVELACE),
       em([[eb(policyIdBytes), em([[eb(assetName),eu(1)]])]])
     ]);
-    const tokenOut=ea([eb(addrBytes),tokenValue]);
+    const tokenOut=ea([eb(pkhAddrBytes),tokenValue]); // token → receive address
 
     // Change output: [addr, lovelace]
-    const changeOut=ea([eb(addrBytes),eu(change)]);
+    const changeOut=ea([eb(changeBytes),eu(change)]); // change → change address
 
     // Mint: {policyId: {assetName: 1}}
     const mintField=em([[eb(policyIdBytes), em([[eb(assetName),ei(1)]])]]);
 
-    // Tx body map: {0:[inputs], 1:[outputs], 2:fee, 9:mint}
-    const txBody=em([
-      [eu(0), ea([txIn])],       // inputs as plain array (Babbage-compat)
-      [eu(1), ea([tokenOut,changeOut])],
-      [eu(2), eu(FEE)],
-      [eu(9), mintField]
-    ]);
-
-    // Unsigned tx: [body, {}, true, null]
-    const unsignedTx=ea([txBody, em([]), CTRUE, CNULL]);
-
-    // ── Sign ──
-    setStatus('Please approve in Lace…');
-    const witHex=await api.signTx(toHex(unsignedTx), true); // true = partial
-
-    // Parse returned witness set {0: [[vkey,sig],...]}
-    const retWit=cborDecode(witHex);
-    const vkeyWits=retWit[0]; // array of [vkey_bytes, sig_bytes]
-
-    // Build final witness set: {0: #6.258([[vkey,sig]]), 1: [nativeScr
+    // Tx body map: {0:[inputs], 1:[outputs], 2:fee, 9:mint, 14:required_signers}
+    // Field 14 forces Lace to include the receive-address key signature (needed by native script)
