@@ -5,47 +5,68 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Midnight Loadboard</title>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{background:#0a0a12;color:#e0e0e0;font-family:Helvetica,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
-  header{width:100%;background:#12121e;border-bottom:1px solid #2a2a3e;padding:16px 32px;display:flex;align-items:center;gap:12px}
-  header h1{font-size:20px;font-weight:700;color:#fff;letter-spacing:0.5px}
-  header .badge{font-size:11px;background:#1e1e3a;border:1px solid #4040a0;border-radius:4px;padding:2px 8px;color:#8888cc}
-  #connect-section{margin-top:80px;text-align:center;max-width:480px;padding:0 24px}
-  #connect-section h2{font-size:28px;font-weight:700;margin-bottom:12px;color:#fff}
-  #connect-section p{color:#888;font-size:15px;line-height:1.6;margin-bottom:32px}
-  button{cursor:pointer;border:none;border-radius:8px;font-size:15px;font-weight:600;padding:12px 28px;transition:all 0.15s}
-  #btn-connect{background:#5c5cff;color:#fff}
-  #btn-connect:hover{background:#7070ff}
-  #btn-connect:disabled{background:#333;color:#666;cursor:not-allowed}
-  #status{margin-top:20px;font-size:13px;color:#666;min-height:20px}
-  #dashboard{display:none;width:100%;max-width:960px;padding:32px 24px}
-  .dash-header{display:flex;align-items:center;gap:16px;margin-bottom:32px}
-  .dash-header h2{font-size:24px;font-weight:700;color:#fff}
-  .role-badge{font-size:12px;font-weight:700;border-radius:20px;padding:4px 14px}
-  .role-trucker{background:#1a3a1a;color:#4caf50;border:1px solid #2d6a2d}
-  .role-broker{background:#1a1a3a;color:#5c5cff;border:1px solid #2d2d6a}
-  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-  .card{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:24px}
-  .card h3{font-size:16px;font-weight:700;margin-bottom:8px;color:#fff}
-  .card p{font-size:13px;color:#888;line-height:1.5;margin-bottom:16px}
-  .card-btn{display:inline-block;font-size:13px;font-weight:600;color:#5c5cff;text-decoration:none;cursor:pointer;background:none;border:1px solid #5c5cff;border-radius:6px;padding:6px 14px}
-  .card-btn:hover{background:#1a1a3a}
-  .wallet-info{font-size:12px;color:#555;margin-top:8px}
-  .cred-info{font-size:12px;background:#0f1a0f;border:1px solid #1d3a1d;border-radius:6px;padding:10px 14px;color:#4caf50;margin-top:16px;word-break:break-all}
-  .no-cred{font-size:12px;background:#1a0f0f;border:1px solid #3a1d1d;border-radius:6px;padding:10px 14px;color:#cf6679;margin-top:16px}
-  .section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#555;margin-bottom:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a12;color:#e0e0e0;font-family:Helvetica,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+header{width:100%;background:#12121e;border-bottom:1px solid #2a2a3e;padding:16px 32px;display:flex;align-items:center;gap:12px}
+header h1{font-size:20px;font-weight:700;color:#fff;letter-spacing:0.5px;flex:1}
+.net-toggle{display:flex;gap:0;border:1px solid #3a3a5e;border-radius:6px;overflow:hidden}
+.net-btn{background:none;border:none;color:#888;font-size:12px;font-weight:600;padding:5px 12px;cursor:pointer}
+.net-btn.active{background:#5c5cff;color:#fff}
+header .badge{font-size:11px;background:#1e1e3a;border:1px solid #4040a0;border-radius:4px;padding:2px 8px;color:#8888cc}
+#connect-section{margin-top:80px;text-align:center;max-width:480px;padding:0 24px}
+#connect-section h2{font-size:28px;font-weight:700;margin-bottom:12px;color:#fff}
+#connect-section p{color:#888;font-size:15px;line-height:1.6;margin-bottom:32px}
+button.primary{cursor:pointer;border:none;border-radius:8px;font-size:15px;font-weight:600;padding:12px 28px;background:#5c5cff;color:#fff}
+button.primary:hover{background:#7070ff}
+button.primary:disabled{background:#333;color:#666;cursor:not-allowed}
+#status{margin-top:20px;font-size:13px;color:#666;min-height:20px}
+#dashboard{display:none;width:100%;max-width:960px;padding:32px 24px}
+.dash-header{display:flex;align-items:center;gap:16px;margin-bottom:8px}
+.dash-header h2{font-size:24px;font-weight:700;color:#fff}
+.role-badge{font-size:12px;font-weight:700;border-radius:20px;padding:4px 14px}
+.role-trucker{background:#1a3a1a;color:#4caf50;border:1px solid #2d6a2d}
+.role-broker{background:#1a1a3a;color:#5c5cff;border:1px solid #2d2d6a}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:24px}
+.card{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:24px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:8px;color:#fff}
+.card p{font-size:13px;color:#888;line-height:1.5;margin-bottom:16px}
+.card-btn{font-size:13px;font-weight:600;color:#5c5cff;cursor:pointer;background:none;border:1px solid #5c5cff;border-radius:6px;padding:6px 14px}
+.card-btn:hover{background:#1a1a3a}
+.wallet-info{font-size:12px;color:#555;margin-top:8px;margin-bottom:4px}
+.cred-info{font-size:12px;background:#0f1a0f;border:1px solid #1d3a1d;border-radius:6px;padding:10px 14px;color:#4caf50;margin-top:8px;word-break:break-all}
+.no-cred{font-size:12px;background:#1a0f0f;border:1px solid #3a1d1d;border-radius:6px;padding:10px 14px;color:#cf6679;margin-top:8px}
+.section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#555}
+/* Panel */
+#panel-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100}
+#panel{position:fixed;top:0;right:0;height:100%;width:420px;max-width:100vw;background:#12121e;border-left:1px solid #2a2a3e;z-index:101;padding:32px 28px;overflow-y:auto;transform:translateX(100%);transition:transform 0.2s ease}
+#panel.open{transform:translateX(0)}
+#panel h2{font-size:20px;font-weight:700;color:#fff;margin-bottom:4px}
+#panel .coming-soon{display:inline-block;font-size:11px;font-weight:700;background:#2a1a0a;color:#f0a050;border:1px solid #5a3a10;border-radius:4px;padding:2px 8px;margin-bottom:20px}
+#panel-close{position:absolute;top:20px;right:20px;background:none;border:none;color:#888;font-size:22px;cursor:pointer;line-height:1}
+#panel-close:hover{color:#fff}
+#panel-body{font-size:13px;color:#888;line-height:1.7}
+.token-field{margin-top:12px}
+.token-label{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px}
+.token-value{font-size:12px;color:#c0c0e0;word-break:break-all;background:#0a0a18;border:1px solid #2a2a3e;border-radius:4px;padding:6px 10px}
+.token-value.ok{color:#4caf50;border-color:#1d3a1d;background:#0a180a}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid #333;border-top-color:#5c5cff;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 <header>
   <h1>Midnight Loadboard</h1>
-  <span class="badge">Preprod</span>
+  <div class="net-toggle">
+    <button class="net-btn active" id="btn-preprod" onclick="setNet('preprod')">Preprod</button>
+    <button class="net-btn" id="btn-mainnet" onclick="setNet('mainnet')">Mainnet</button>
+  </div>
+  <span class="badge" id="net-badge">Preprod</span>
 </header>
 
 <div id="connect-section">
   <h2>Connect Your Wallet</h2>
   <p>Connect your Cardano wallet to access the loadboard. TCT holders are routed to the Trucker Dashboard automatically.</p>
-  <button id="btn-connect" onclick="connectWallet()">Connect Lace Wallet</button>
+  <button class="primary" id="btn-connect" onclick="connectWallet()">Connect Lace Wallet</button>
   <div id="status"></div>
 </div>
 
@@ -56,74 +77,68 @@
   </div>
   <div id="wallet-info" class="wallet-info"></div>
   <div id="cred-info"></div>
-  <div style="height:24px"></div>
+  <div style="height:16px"></div>
   <div class="section-title">Actions</div>
   <div id="cards" class="cards"></div>
 </div>
 
+<!-- Side panel -->
+<div id="panel-overlay" onclick="closePanel()"></div>
+<div id="panel">
+  <button id="panel-close" onclick="closePanel()">✕</button>
+  <h2 id="panel-title"></h2>
+  <span class="coming-soon" id="panel-tag"></span>
+  <div id="panel-body"></div>
+</div>
+
 <script>
 const CRED_POLICY_ID = '4dad78ae2dd5e2d4db3f6e43d897b8df00e50f20c69d8475551dfbcb';
+const ASSET_NAME_HEX = '544354'; // 'TCT'
+const ASSET_ID = CRED_POLICY_ID + ASSET_NAME_HEX;
 
-const TRUCKER_CARDS = [
-  {title:'🚛 Open Loads',desc:'Browse and claim available loads. Your TCT credential allows you to bid on carrier-gated loads.',action:'View Loads'},
-  {title:'📦 My Deliveries',desc:'Track your active and completed deliveries. View payment status and delivery confirmations.',action:'View Deliveries'},
-  {title:'⭐ Reputation',desc:'Your on-chain carrier score and delivery history. Build your reputation to unlock higher-value loads.',action:'View Score'},
-  {title:'🔑 My TCT Credential',desc:'Your Trucker Credential Token (TCT) is active. This soulbound NFT grants you access to the carrier network.',action:'View Token'}
-];
+const NETWORKS = {
+  preprod: {
+    label: 'Preprod',
+    bfUrl: 'https://cardano-preprod.blockfrost.io/api/v0',
+    bfKey: 'preprodIn7U7hLcUwtizoVFX1sYIOnPVCHI2HHf'
+  },
+  mainnet: {
+    label: 'Mainnet',
+    bfUrl: 'https://cardano-mainnet.blockfrost.io/api/v0',
+    bfKey: '' // add your mainnet Blockfrost key here
+  }
+};
 
-const BROKER_CARDS = [
-  {title:'📋 Post a Load',desc:'Create a new load listing. Set your rate, route, and requirements. Only credentialed carriers can claim.',action:'Post Load'},
-  {title:'📊 My Loads',desc:'Manage your active listings, reveal bids, and confirm delivery for loads you have posted.',action:'Manage Loads'},
-  {title:'📁 Carrier Registry',desc:'Browse verified carriers in the network. All carriers hold a valid Trucker Credential Token.',action:'View Registry'},
-  {title:'🔑 Get Credentials',desc:"You don't have a Trucker Credential Token. Request one to access carrier-gated loads on the network.",action:'Request TCT'}
-];
+let currentNet = 'preprod';
+let walletApi   = null;
+let walletAddr  = null;
+
+function setNet(net) {
+  currentNet = net;
+  document.getElementById('btn-preprod').classList.toggle('active', net==='preprod');
+  document.getElementById('btn-mainnet').classList.toggle('active', net==='mainnet');
+  document.getElementById('net-badge').textContent = NETWORKS[net].label;
+  // reset if already connected
+  document.getElementById('connect-section').style.display = '';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('btn-connect').disabled = false;
+  setStatus('');
+  walletApi = null; walletAddr = null;
+}
 
 function setStatus(msg,color){const el=document.getElementById('status');el.textContent=msg;el.style.color=color||'#666';}
+
+async function bfGet(path) {
+  const n = NETWORKS[currentNet];
+  if(!n.bfKey) throw new Error('No Blockfrost key for '+n.label+'. Add it to NETWORKS.mainnet.bfKey in index.html.');
+  const r = await fetch(n.bfUrl+path, {headers:{project_id: n.bfKey}});
+  if(!r.ok) { const j=await r.json().catch(()=>({})); throw new Error(j.message||r.status); }
+  return r.json();
+}
 
 async function connectWallet(){
   const btn=document.getElementById('btn-connect');
   btn.disabled=true;
   setStatus('Looking for wallet…');
   const cardano=window.cardano;
-  if(!cardano){setStatus('No Cardano wallet found. Please install Lace.','#cf6679');btn.disabled=false;return;}
-  const walletKey=['lace','eternl','nami','flint'].find(k=>cardano[k]?.enable);
-  if(!walletKey){setStatus('No supported wallet found (Lace, Eternl, Nami).','#cf6679');btn.disabled=false;return;}
-  setStatus('Connecting to '+walletKey+'…');
-  let api;
-  try{api=await cardano[walletKey].enable();}
-  catch(e){setStatus('Connection rejected.','#cf6679');btn.disabled=false;return;}
-  setStatus('Checking credentials…');
-  let addrDisplay='';
-  try{const addrs=await api.getUsedAddresses();if(addrs&&addrs.length>0){const hex=addrs[0];addrDisplay=hex.substring(0,12)+'…'+hex.substring(hex.length-8);}}catch(e){}
-  let hasTCT=false;
-  try{
-    const utxos=await api.getUtxos();
-    if(utxos&&utxos.length>0){
-      for(const u of utxos){
-        const s=typeof u==='string'?u:JSON.stringify(u);
-        if(s.includes(CRED_POLICY_ID)){hasTCT=true;break;}
-      }
-    }
-    try{const bal=await api.getBalance();if(bal&&bal.includes&&bal.includes(CRED_POLICY_ID))hasTCT=true;}catch(e){}
-  }catch(e){setStatus('Could not read UTxOs: '+e.message,'#cf6679');}
-  showDashboard(hasTCT,addrDisplay,walletKey);
-}
-
-function showDashboard(hasTCT,addrDisplay,walletName){
-  document.getElementById('connect-section').style.display='none';
-  document.getElementById('dashboard').style.display='block';
-  document.getElementById('dash-title').textContent=hasTCT?'Trucker Dashboard':'Broker Dashboard';
-  const badge=document.getElementById('role-badge');
-  badge.textContent=hasTCT?'TCT Verified Carrier':'Broker / Shipper';
-  badge.className='role-badge '+(hasTCT?'role-trucker':'role-broker');
-  if(addrDisplay)document.getElementById('wallet-info').textContent=walletName+' · '+addrDisplay;
-  const credEl=document.getElementById('cred-info');
-  credEl.innerHTML=hasTCT
-    ?'<div class="cred-info">✓ TCT Active · Policy: '+CRED_POLICY_ID+'</div>'
-    :'<div class="no-cred">✗ No TCT found · Policy: '+CRED_POLICY_ID+'</div>';
-  const cards=hasTCT?TRUCKER_CARDS:BROKER_CARDS;
-  document.getElementById('cards').innerHTML=cards.map(c=>'<div class="card"><h3>'+c.title+'</h3><p>'+c.desc+'</p><button class="card-btn">'+c.action+'</button></div>').join('');
-}
-</script>
-</body>
-</html>
+  if(!cardano){setStatus('No Cardano wallet found.','#cf6679');btn.disab
