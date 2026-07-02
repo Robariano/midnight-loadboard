@@ -1,1 +1,218 @@
-https://github.com/Robariano/midnight-loadboard/edit/main/mint-tct.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Mint TCT - Midnight Loadboard</title>
+<style>
+body{background:#0a0a12;color:#e0e0e0;font-family:Helvetica,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px}
+h1{font-size:24px;color:#fff;margin-bottom:8px}
+.policy{font-size:11px;color:#555;word-break:break-all;max-width:540px;margin:0 auto 32px}
+button{background:#5c5cff;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;padding:14px 32px;cursor:pointer;transition:background 0.15s}
+button:hover{background:#7070ff}
+button:disabled{background:#333;color:#666;cursor:not-allowed}
+#status{margin-top:24px;font-size:14px;min-height:24px;line-height:1.6;max-width:540px}
+.ok{color:#4caf50}
+.err{color:#cf6679}
+.tx{font-size:11px;word-break:break-all;background:#0f1a0f;border:1px solid #1d3a1d;border-radius:6px;padding:12px;margin-top:12px;color:#4caf50}
+</style>
+</head>
+<body>
+<h1>Mint TCT Token</h1>
+<div class="policy">Policy: 4dad78ae2dd5e2d4db3f6e43d897b8df00e50f20c69d8475551dfbcb</div>
+<button id="btn" onclick="mint()">Mint TCT with Lace</button>
+<div id="status"></div>
+
+<script>
+// ── No external libraries. Pure JS CBOR transaction builder. ──
+// Policy is sig(pkh) where pkh = payment key hash of Rob's first receive address:
+// addr_test1qz0zddanvvg09vdznd6k3s8we82g9z9pvc86eexvutwvcpkk5vy73k05pwnh4u3tljeyvhr2y44lgre563xks6gpwjdqwzxmud
+
+const POLICY_ID      = '4dad78ae2dd5e2d4db3f6e43d897b8df00e50f20c69d8475551dfbcb';
+// Hardcoded PKH and token-receive address from confirmed first receive address
+const SIGNER_PKH_HEX = '9e26b7b36310f2b1a29b7568c0eec9d48288a1660face4cce2dccc06';
+const TOKEN_ADDR_HEX = '009e26b7b36310f2b1a29b7568c0eec9d48288a1660face4cce2dccc06d6a309e8d9f40ba77af22bfcb2465c6a256bf40f34d44d686901749a';
+const BF_URL         = 'https://cardano-preprod.blockfrost.io/api/v0';
+const BF_KEY         = 'preprodIn7U7hLcUwtizoVFX1sYIOnPVCHI2HHf';
+const TOKEN_LOVELACE = 2000000;
+const FEE            = 200000;
+
+const fromHex = h => Uint8Array.from(h.match(/.{1,2}/g), b => parseInt(b,16));
+const toHex   = b => Array.from(b, x => x.toString(16).padStart(2,'0')).join('');
+
+// ── CBOR encoder ──
+function cat(...a){
+  let n=0; for(const x of a) n+=x.length;
+  const r=new Uint8Array(n); let o=0;
+  for(const x of a){r.set(x,o);o+=x.length;}
+  return r;
+}
+function hdr(maj,n){
+  const b=maj<<5;
+  if(n<24)    return new Uint8Array([b|n]);
+  if(n<256)   return new Uint8Array([b|24,n]);
+  if(n<65536) return new Uint8Array([b|25,n>>8,n&0xff]);
+  return new Uint8Array([b|26,(n>>>24)&0xff,(n>>16)&0xff,(n>>8)&0xff,n&0xff]);
+}
+const eu = n => hdr(0,n);
+const eb = b => cat(hdr(2,b.length), b);
+const ea = a => cat(hdr(4,a.length), ...a);
+const em = ps => cat(hdr(5,ps.length), ...ps.map(([k,v])=>cat(k,v)));
+const es = a => cat(new Uint8Array([0xd9,0x01,0x02]), ea(a)); // #6.258 tagged set
+const ei = n => { if(n>=0) return eu(n); const r=eu(-1-n); r[0]|=0x20; return r; };
+const CTRUE = new Uint8Array([0xf5]);
+const CNULL = new Uint8Array([0xf6]);
+
+// ── CBOR decoder ──
+function dec(buf, p){
+  const b=buf[p], maj=b>>5, inf=b&0x1f;
+  let n,e;
+  if(inf<24){n=inf;e=p+1;}
+  else if(inf===24){n=buf[p+1];e=p+2;}
+  else if(inf===25){n=(buf[p+1]<<8)|buf[p+2];e=p+3;}
+  else if(inf===26){n=(buf[p+1]*16777216)+(buf[p+2]<<16)+(buf[p+3]<<8)+buf[p+4];e=p+5;}
+  else if(inf===27){
+    n=Number((BigInt(buf[p+1])<<56n)|(BigInt(buf[p+2])<<48n)|(BigInt(buf[p+3])<<40n)|
+      (BigInt(buf[p+4])<<32n)|(BigInt(buf[p+5])<<24n)|(BigInt(buf[p+6])<<16n)|
+      (BigInt(buf[p+7])<<8n)|BigInt(buf[p+8]));e=p+9;}
+  else throw new Error('CBOR inf '+inf);
+  if(maj===0) return [n,e];
+  if(maj===1) return [-(n+1),e];
+  if(maj===2) return [buf.slice(e,e+n),e+n];
+  if(maj===3) return [new TextDecoder().decode(buf.slice(e,e+n)),e+n];
+  if(maj===4){const r=[];let p2=e;for(let i=0;i<n;i++){const[v,p3]=dec(buf,p2);r.push(v);p2=p3;}return[r,p2];}
+  if(maj===5){const r={};let p2=e;for(let i=0;i<n;i++){const[k,p3]=dec(buf,p2);const[v,p4]=dec(buf,p3);r[k]=v;p2=p4;}return[r,p2];}
+  if(maj===6) return dec(buf,e);
+  throw new Error('CBOR maj '+maj);
+}
+function cborDecode(hex){ return dec(fromHex(hex),0)[0]; }
+
+// ── Decode CIP-30 address (raw bytes or CBOR-wrapped) ──
+function decodeAddr(hex){
+  const fb=parseInt(hex.slice(0,2),16);
+  if(fb===0x58||fb===0x59){const d=cborDecode(hex);return(d instanceof Uint8Array)?d:fromHex(hex);}
+  return fromHex(hex);
+}
+
+function setStatus(msg,cls){
+  const el=document.getElementById('status');
+  el.innerHTML=msg; el.className=cls||'';
+}
+
+// ── Parse UTxO ──
+function parseUtxo(hex){
+  const u=cborDecode(hex);
+  const [input,output]=u;
+  const [txHash,txIndex]=input;
+  const val=Array.isArray(output)?output[1]:output[1];
+  let lovelace,pureAda;
+  if(typeof val==='number'){lovelace=val;pureAda=true;}
+  else if(Array.isArray(val)){lovelace=val[0];pureAda=false;}
+  else{lovelace=0;pureAda=false;}
+  return{txHash,txIndex,lovelace,pureAda};
+}
+
+// ── Main mint function ──
+async function mint(){
+  const btn=document.getElementById('btn');
+  btn.disabled=true;
+  try{
+    if(!window.cardano?.lace) throw new Error('Lace wallet not found. Install Lace and switch to Preprod.');
+    setStatus('Connecting to Lace…');
+    const api=await window.cardano.lace.enable();
+
+    // Hardcoded PKH from Rob's confirmed first receive address.
+    // Native script sig(pkh) hashes to policy 4dad78ae...
+    const pkh         = fromHex(SIGNER_PKH_HEX);
+    const pkhAddrBytes = fromHex(TOKEN_ADDR_HEX);  // token output → first receive address
+
+    setStatus('Getting change address…');
+    const changeHex  = await api.getChangeAddress();
+    const changeBytes = decodeAddr(changeHex);
+
+    // Native script CBOR: [0, pkh_bytes]
+    const nativeScriptCbor = ea([eu(0), eb(pkh)]);
+
+    // ── Pick best UTxO ──
+    setStatus('Scanning UTxOs…');
+    const rawUtxos = await api.getUtxos();
+    if(!rawUtxos?.length) throw new Error('No UTxOs in wallet');
+
+    let best=null;
+    for(const raw of rawUtxos){
+      try{
+        const u=parseUtxo(raw);
+        if(u.pureAda&&(!best||u.lovelace>best.lovelace)) best=u;
+      }catch(_){}
+    }
+    if(!best){
+      for(const raw of rawUtxos){
+        try{
+          const u=parseUtxo(raw);
+          if(!best||u.lovelace>best.lovelace) best=u;
+        }catch(_){}
+      }
+    }
+    if(!best) throw new Error('Could not parse any UTxO');
+    const needed=TOKEN_LOVELACE+FEE+1000000;
+    if(best.lovelace<needed)
+      throw new Error('Need >'+(needed/1e6).toFixed(2)+' ADA. Largest UTxO: '+(best.lovelace/1e6).toFixed(2)+' ADA');
+
+    const change=best.lovelace-TOKEN_LOVELACE-FEE;
+    setStatus('UTxO: '+toHex(best.txHash)+'#'+best.txIndex
+      +'<br>ADA: '+(best.lovelace/1e6).toFixed(2)
+      +'  Fee: '+(FEE/1e6)
+      +'  Change: '+(change/1e6).toFixed(2));
+
+    // ── Build transaction ──
+    const policyIdBytes = fromHex(POLICY_ID);
+    const assetName     = new TextEncoder().encode('TCT');
+
+    const txIn      = ea([eb(best.txHash), eu(best.txIndex)]);
+    const tokenValue = ea([
+      eu(TOKEN_LOVELACE),
+      em([[eb(policyIdBytes), em([[eb(assetName),eu(1)]])]])
+    ]);
+    const tokenOut  = ea([eb(pkhAddrBytes), tokenValue]); // token → first receive address
+    const changeOut = ea([eb(changeBytes),  eu(change)]);  // change → change address
+    const mintField = em([[eb(policyIdBytes), em([[eb(assetName),ei(1)]])]]);
+
+    // required_signers (field 14) tells Lace to sign with the receive-address key
+    const txBody = em([
+      [eu(0),  ea([txIn])],
+      [eu(1),  ea([tokenOut, changeOut])],
+      [eu(2),  eu(FEE)],
+      [eu(9),  mintField],
+      [eu(14), es([eb(pkh)])]
+    ]);
+
+    const unsignedTx = ea([txBody, em([]), CTRUE, CNULL]);
+
+    // ── Sign ──
+    setStatus('Please approve in Lace…');
+    const witHex = await api.signTx(toHex(unsignedTx), true);
+
+    const retWit  = cborDecode(witHex);
+    const vkeyWits = retWit[0];
+
+    const witPairs = [];
+    if(vkeyWits?.length){
+      witPairs.push([eu(0), es(vkeyWits.map(([vk,sg])=>ea([eb(vk),eb(sg)])))]);
+    }
+    witPairs.push([eu(1), ea([nativeScriptCbor])]);
+    const finalWit = em(witPairs);
+    const finalTx  = ea([txBody, finalWit, CTRUE, CNULL]);
+
+    // ── Submit ──
+    setStatus('Submitting…');
+    const txHash = await api.submitTx(toHex(finalTx));
+    setStatus('✓ TCT minted!<div class="tx">TX: '+txHash+'</div>','ok');
+
+  }catch(e){
+    setStatus('Error: '+(e.message||String(e)),'err');
+    btn.disabled=false;
+  }
+}
+</script>
+</body>
+</html>
