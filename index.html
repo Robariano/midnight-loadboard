@@ -97,16 +97,8 @@ const ASSET_NAME_HEX = '544354'; // 'TCT'
 const ASSET_ID = CRED_POLICY_ID + ASSET_NAME_HEX;
 
 const NETWORKS = {
-  preprod: {
-    label: 'Preprod',
-    bfUrl: 'https://cardano-preprod.blockfrost.io/api/v0',
-    bfKey: 'preprodIn7U7hLcUwtizoVFX1sYIOnPVCHI2HHf'
-  },
-  mainnet: {
-    label: 'Mainnet',
-    bfUrl: 'https://cardano-mainnet.blockfrost.io/api/v0',
-    bfKey: '' // add your mainnet Blockfrost key here
-  }
+  preprod: { label: 'Preprod', apiUrl: 'https://preprod.koios.rest/api/v1' },
+  mainnet: { label: 'Mainnet', apiUrl: 'https://api.koios.rest/api/v1'    }
 };
 
 let currentNet = 'preprod';
@@ -128,11 +120,14 @@ function setNet(net) {
 
 function setStatus(msg,color){const el=document.getElementById('status');el.textContent=msg;el.style.color=color||'#666';}
 
-async function bfGet(path) {
-  const n = NETWORKS[currentNet];
-  if(!n.bfKey) throw new Error('No Blockfrost key for '+n.label+'. Add it to NETWORKS.mainnet.bfKey in index.html.');
-  const r = await fetch(n.bfUrl+path, {headers:{project_id: n.bfKey}});
-  if(!r.ok) { const j=await r.json().catch(()=>({})); throw new Error(j.message||r.status); }
+async function koiosPost(path, body) {
+  const url = NETWORKS[currentNet].apiUrl + path;
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json', 'Accept':'application/json'},
+    body: JSON.stringify(body)
+  });
+  if(!r.ok) { const j=await r.json().catch(()=>({})); throw new Error(j.hint||j.message||r.status); }
   return r.json();
 }
 
@@ -141,4 +136,6 @@ async function connectWallet(){
   btn.disabled=true;
   setStatus('Looking for wallet…');
   const cardano=window.cardano;
-  if(!cardano){setStatus('No Cardano wallet found.','#cf6679');btn.disab
+  if(!cardano){setStatus('No Cardano wallet found.','#cf6679');btn.disabled=false;return;}
+  const walletKey=['lace','eternl','nami','flint'].find(k=>cardano[k]?.enable);
+  if(!walletKey){setStatus('No supported
