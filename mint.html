@@ -9,11 +9,11 @@
 body{background:#0a0a12;color:#e0e0e0;font-family:Helvetica,Arial,sans-serif;max-width:600px;margin:60px auto;padding:0 24px}
 h1{color:#fff;font-size:24px;margin-bottom:8px}
 .sub{color:#555;font-size:13px;line-height:1.6;margin-bottom:28px}
-label{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;margin-top:16px}
-input{width:100%;background:#0a0a18;border:1px solid #2a2a3e;border-radius:6px;color:#c0c0e0;font-size:13px;padding:8px 12px;margin-bottom:4px}
-.hint{font-size:11px;color:#444;margin-bottom:4px}
+label{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px}
+input{width:100%;background:#0a0a18;border:1px solid #2a2a3e;border-radius:6px;color:#c0c0e0;font-size:13px;padding:8px 12px;margin-bottom:6px}
+.hint{font-size:11px;color:#444;margin-bottom:20px}
 .hint a{color:#5c5cff}
-#btn-mint{background:#5c5cff;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;padding:12px 28px;cursor:pointer;margin-top:20px}
+#btn-mint{background:#5c5cff;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;padding:12px 28px;cursor:pointer;margin-top:4px}
 #btn-mint:hover{background:#7070ff}
 #btn-mint:disabled{background:#333;color:#666;cursor:not-allowed}
 #log{margin-top:24px}
@@ -23,50 +23,27 @@ input{width:100%;background:#0a0a18;border:1px solid #2a2a3e;border-radius:6px;c
 .val.ok{color:#4caf50;border-color:#1d3a1d;background:#0a180a}
 .val.warn{color:#f0a050;border-color:#5a3a10;background:#1a100a}
 .msg{font-size:13px;color:#888;margin-top:12px}
-.err{font-size:13px;color:#cf6679;margin-top:12px;background:#1a0808;border:1px solid #3a1010;border-radius:4px;padding:8px 12px;word-break:break-all}
+.err{font-size:13px;color:#cf6679;margin-top:12px;background:#1a0808;border:1px solid #3a1010;border-radius:4px;padding:8px 12px}
 </style>
 </head>
 <body>
 <h1>Mint TCT - Mainnet</h1>
-<p class="sub">Mints 1 Trucker Credential Token on Cardano mainnet using your Lace wallet. Requires ~0.2 ADA in fees and a free Blockfrost Mainnet Project ID.</p>
+<p class="sub">Mints 1 Trucker Credential Token on Cardano mainnet using your Lace wallet. Requires ~0.2 ADA in fees and a free Maestro API key.</p>
 
-<label>Blockfrost Mainnet Project ID</label>
-<input id="bfkey" type="text" placeholder="mainnetXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"/>
-<p class="hint">Free key at <a href="https://blockfrost.io" target="_blank">blockfrost.io</a> - New project - Mainnet - copy Project ID</p>
+<label>Maestro Mainnet API Key</label>
+<input id="mkey" type="text" placeholder="Paste your Maestro API key here"/>
+<p class="hint">Free key at <a href="https://gomaestro.org" target="_blank">gomaestro.org</a> - Sign up - New project - Mainnet - copy API key</p>
 
 <button id="btn-mint">Connect Lace and Mint TCT</button>
 <div id="log"></div>
 
 <script type="module">
-import{Lucid,Blockfrost,fromText}from'https://unpkg.com/lucid-cardano@0.10.11/web/mod.js';
+import{Lucid,Maestro,fromText}from'https://unpkg.com/lucid-cardano@0.10.11/web/mod.js';
 
 const KNOWN='4dad78ae2dd5e2d4db3f6e43d897b8df00e50f20c69d8475551dfbcb';
 const btn=document.getElementById('btn-mint');
 const log=document.getElementById('log');
-const bfIn=document.getElementById('bfkey');
-
-// Patch fetch to truncate Conway-era cost model so Lucid v0.10.11 doesn't crash
-const _fetch=window.fetch.bind(window);
-window.fetch=async function(url,...args){
-  const res=await _fetch(url,...args);
-  if(typeof url==='string'&&url.includes('epochs/latest/parameters')){
-    try{
-      const data=await res.clone().json();
-      if(data.cost_models){
-        // Lucid expects max 166 ops for PlutusV1/V2; Conway adds more - truncate
-        ['PlutusV1','PlutusV2'].forEach(v=>{
-          if(data.cost_models[v]){
-            const entries=Object.entries(data.cost_models[v]).slice(0,166);
-            data.cost_models[v]=Object.fromEntries(entries);
-          }
-        });
-        delete data.cost_models['PlutusV3'];
-      }
-      return new Response(JSON.stringify(data),{status:res.status,statusText:res.statusText,headers:res.headers});
-    }catch(e){return res;}
-  }
-  return res;
-};
+const mIn=document.getElementById('mkey');
 
 function msg(t){const p=document.createElement('p');p.className='msg';p.textContent=t;log.appendChild(p);return p;}
 function field(lbl,val,cls){
@@ -77,12 +54,12 @@ function field(lbl,val,cls){
 }
 
 btn.addEventListener('click',async()=>{
-  const key=bfIn.value.trim();
-  if(!key){log.innerHTML='<p class="err">Enter Blockfrost Project ID first.</p>';return;}
+  const key=mIn.value.trim();
+  if(!key){log.innerHTML='<p class="err">Enter Maestro API key first.</p>';return;}
   btn.disabled=true;log.innerHTML='';
   const m=msg('Initializing...');
   try{
-    const lucid=await Lucid.new(new Blockfrost('https://cardano-mainnet.blockfrost.io/api/v0',key),'Mainnet');
+    const lucid=await Lucid.new(new Maestro({network:'Mainnet',apiKey:key}),'Mainnet');
     m.textContent='Connecting Lace...';
     if(!window.cardano||!window.cardano.lace)throw new Error('Lace not found. Install Lace and set it to Mainnet.');
     const api=await window.cardano.lace.enable();
@@ -108,10 +85,7 @@ btn.addEventListener('click',async()=>{
     field('Status','TCT minted on Mainnet','ok');
   }catch(e){
     m.remove();
-    const er=document.createElement('p');er.className='err';
-    er.textContent='Error: '+(e instanceof Error?e.message:String(e)||'unknown - check console (F12)');
-    log.appendChild(er);
-    console.error(e);
+    const er=document.createElement('p');er.className='err';er.textContent='Error: '+e.message;log.appendChild(er);
     btn.disabled=false;
   }
 });
