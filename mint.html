@@ -1,1 +1,155 @@
- github.com/Robariano/midnight-loadboard/blob/main/mint.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Mint TCT - Mainnet</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a12;color:#e0e0e0;font-family:Helvetica,Arial,sans-serif;max-width:600px;margin:60px auto;padding:0 24px}
+h1{color:#fff;font-size:24px;margin-bottom:8px}
+.sub{color:#555;font-size:13px;line-height:1.6;margin-bottom:28px}
+label{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;margin-top:16px}
+input{width:100%;background:#0a0a18;border:1px solid #2a2a3e;border-radius:6px;color:#c0c0e0;font-size:13px;padding:8px 12px;margin-bottom:4px}
+.hint{font-size:11px;color:#444;margin-bottom:4px}
+.hint a{color:#5c5cff}
+#wallet-list{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;margin-bottom:4px}
+.w-btn{background:#1a1a2e;border:1px solid #2a2a3e;border-radius:8px;color:#c0c0e0;font-size:13px;padding:8px 16px;cursor:pointer}
+.w-btn:hover{border-color:#5c5cff;color:#fff}
+.w-btn.selected{border-color:#5c5cff;background:#1a1a3e;color:#fff}
+#btn-mint{background:#5c5cff;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;padding:12px 28px;cursor:pointer;margin-top:20px}
+#btn-mint:hover{background:#7070ff}
+#btn-mint:disabled{background:#333;color:#666;cursor:not-allowed}
+#log{margin-top:24px}
+.field{margin-top:12px}
+.lbl{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px}
+.val{font-size:12px;color:#c0c0e0;word-break:break-all;background:#0a0a18;border:1px solid #2a2a3e;border-radius:4px;padding:6px 10px}
+.val.ok{color:#4caf50;border-color:#1d3a1d;background:#0a180a}
+.val.warn{color:#f0a050;border-color:#5a3a10;background:#1a100a}
+.msg{font-size:13px;color:#888;margin-top:12px}
+.err{font-size:13px;color:#cf6679;margin-top:12px;background:#1a0808;border:1px solid #3a1010;border-radius:4px;padding:8px 12px;word-break:break-all}
+</style>
+</head>
+<body>
+<h1>Mint TCT - Mainnet</h1>
+<p class="sub">Mints 1 Trucker Credential Token on Cardano mainnet. Requires ~0.2 ADA in fees and a free Blockfrost Mainnet Project ID.</p>
+
+<label>Blockfrost Mainnet Project ID</label>
+<input id="bfkey" type="text" placeholder="mainnetXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"/>
+<p class="hint">Free key at <a href="https://blockfrost.io" target="_blank">blockfrost.io</a> - New project - Mainnet - copy Project ID</p>
+
+<label>Select Wallet</label>
+<div id="wallet-list"><p class="hint" style="margin:0">Loading wallets...</p></div>
+
+<button id="btn-mint">Connect and Mint TCT</button>
+<div id="log"></div>
+
+<script type="module">
+import{Lucid,Blockfrost,fromText}from'https://unpkg.com/lucid-cardano@0.10.11/web/mod.js';
+
+const KNOWN='4dad78ae2dd5e2d4db3f6e43d897b8df00e50f20c69d8475551dfbcb';
+const btn=document.getElementById('btn-mint');
+const log=document.getElementById('log');
+const bfIn=document.getElementById('bfkey');
+const wList=document.getElementById('wallet-list');
+let selectedWallet=null;
+
+// Patch fetch to truncate Conway-era cost model
+const _fetch=window.fetch.bind(window);
+window.fetch=async function(url,...args){
+  const res=await _fetch(url,...args);
+  if(typeof url==='string'&&url.includes('epochs/latest/parameters')){
+    try{
+      const data=await res.clone().json();
+      if(data.cost_models){
+        ['PlutusV1','PlutusV2'].forEach(v=>{
+          if(data.cost_models[v]){
+            const entries=Object.entries(data.cost_models[v]).slice(0,166);
+            data.cost_models[v]=Object.fromEntries(entries);
+          }
+        });
+        delete data.cost_models['PlutusV3'];
+      }
+      return new Response(JSON.stringify(data),{status:res.status,statusText:res.statusText,headers:res.headers});
+    }catch(e){return res;}
+  }
+  return res;
+};
+
+// Detect installed wallets - scan ALL keys in window.cardano
+function detectWallets(){
+  if(!window.cardano){
+    wList.innerHTML='<p class="hint" style="margin:0;color:#cf6679">No Cardano wallet found.</p>';
+    return;
+  }
+  const found=Object.keys(window.cardano).filter(k=>window.cardano[k]&&typeof window.cardano[k].enable==='function');
+  wList.innerHTML='';
+  if(!found.length){
+    wList.innerHTML='<p class="hint" style="margin:0;color:#cf6679">No Cardano wallet found. Make sure your wallet extension is unlocked.</p>';
+    return;
+  }
+  found.forEach(w=>{
+    const b=document.createElement('button');
+    b.className='w-btn';
+    b.textContent=w.charAt(0).toUpperCase()+w.slice(1);
+    b.onclick=()=>{
+      document.querySelectorAll('.w-btn').forEach(x=>x.classList.remove('selected'));
+      b.classList.add('selected');
+      selectedWallet=w;
+    };
+    wList.appendChild(b);
+    if(!selectedWallet){b.click();}
+  });
+}
+setTimeout(detectWallets,1000);
+
+function msg(t){const p=document.createElement('p');p.className='msg';p.textContent=t;log.appendChild(p);return p;}
+function field(lbl,val,cls){
+  const w=document.createElement('div');w.className='field';
+  const l=document.createElement('div');l.className='lbl';l.textContent=lbl;
+  const v=document.createElement('div');v.className='val'+(cls?' '+cls:'');v.textContent=val;
+  w.appendChild(l);w.appendChild(v);log.appendChild(w);
+}
+
+btn.addEventListener('click',async()=>{
+  const key=bfIn.value.trim();
+  if(!key){log.innerHTML='<p class="err">Enter Blockfrost Project ID first.</p>';return;}
+  if(!selectedWallet){log.innerHTML='<p class="err">Select a wallet first.</p>';return;}
+  btn.disabled=true;log.innerHTML='';
+  const m=msg('Initializing...');
+  try{
+    const lucid=await Lucid.new(new Blockfrost('https://cardano-mainnet.blockfrost.io/api/v0',key),'Mainnet');
+    m.textContent='Connecting '+selectedWallet+'...';
+    const api=await window.cardano[selectedWallet].enable();
+    lucid.selectWallet(api);
+    m.textContent='Reading wallet...';
+    const addr=await lucid.wallet.address();
+    field('Address',addr,'');
+    m.textContent='Deriving policy...';
+    const det=lucid.utils.getAddressDetails(addr);
+    const pol=lucid.utils.nativeScriptFromJson({type:'sig',keyHash:det.paymentCredential.hash});
+    const pid=lucid.utils.mintingPolicyToId(pol);
+    const unit=pid+fromText('TCT');
+    field('Policy ID',pid,pid===KNOWN?'ok':'warn');
+    field(pid===KNOWN?'Match':'Note',pid===KNOWN?'Same as preprod - no loadboard changes needed':'New policy - share it so loadboard can be updated',pid===KNOWN?'ok':'warn');
+    m.textContent='Building tx...';
+    const tx=await lucid.newTx().mintAssets({[unit]:1n}).attachMintingPolicy(pol).addSigner(addr).complete();
+    m.textContent='Sign in wallet...';
+    const signed=await tx.sign().complete();
+    m.textContent='Submitting...';
+    const hash=await signed.submit();
+    m.remove();
+    field('TX Hash',hash,'ok');
+    field('Status','TCT minted on Mainnet','ok');
+  }catch(e){
+    m.remove();
+    const er=document.createElement('p');er.className='err';
+    er.textContent='Error: '+(e instanceof Error?e.message:String(e)||'unknown - check console (F12)');
+    log.appendChild(er);
+    console.error(e);
+    btn.disabled=false;
+  }
+});
+</script>
+</body>
+</html>
