@@ -28,22 +28,22 @@ input{width:100%;background:#0a0a18;border:1px solid #2a2a3e;border-radius:6px;c
 </head>
 <body>
 <h1>Mint TCT - Mainnet</h1>
-<p class="sub">Mints 1 Trucker Credential Token on Cardano mainnet using your Lace wallet. Requires ~0.2 ADA in fees and a free Blockfrost API key.</p>
+<p class="sub">Mints 1 Trucker Credential Token on Cardano mainnet using your Lace wallet. Requires ~0.2 ADA in fees and a free Maestro API key.</p>
 
-<label>Blockfrost Mainnet Project ID</label>
-<input id="bf-key" type="text" placeholder="mainnetXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"/>
-<p class="hint">Free key at <a href="https://blockfrost.io" target="_blank">blockfrost.io</a> - New project - Mainnet - copy Project ID</p>
+<label>Maestro Mainnet API Key</label>
+<input id="mkey" type="text" placeholder="Paste your Maestro API key here"/>
+<p class="hint">Free key at <a href="https://gomaestro.org" target="_blank">gomaestro.org</a> - Sign up - New project - Mainnet - copy API key</p>
 
 <button id="btn-mint">Connect Lace and Mint TCT</button>
 <div id="log"></div>
 
 <script type="module">
-import{Lucid,Blockfrost,fromText}from'https://unpkg.com/lucid-cardano@0.10.11/web/mod.js';
+import{Lucid,Maestro,fromText}from'https://unpkg.com/lucid-cardano@0.10.11/web/mod.js';
 
 const KNOWN='4dad78ae2dd5e2d4db3f6e43d897b8df00e50f20c69d8475551dfbcb';
 const btn=document.getElementById('btn-mint');
 const log=document.getElementById('log');
-const bfIn=document.getElementById('bf-key');
+const mIn=document.getElementById('mkey');
 
 function msg(t){const p=document.createElement('p');p.className='msg';p.textContent=t;log.appendChild(p);return p;}
 function field(lbl,val,cls){
@@ -54,12 +54,12 @@ function field(lbl,val,cls){
 }
 
 btn.addEventListener('click',async()=>{
-  const key=bfIn.value.trim();
-  if(!key){log.innerHTML='<p class="err">Enter Blockfrost Project ID first.</p>';return;}
+  const key=mIn.value.trim();
+  if(!key){log.innerHTML='<p class="err">Enter Maestro API key first.</p>';return;}
   btn.disabled=true;log.innerHTML='';
   const m=msg('Initializing...');
   try{
-    const lucid=await Lucid.new(new Blockfrost('https://cardano-mainnet.blockfrost.io/api/v0',key),'Mainnet');
+    const lucid=await Lucid.new(new Maestro({network:'Mainnet',apiKey:key}),'Mainnet');
     m.textContent='Connecting Lace...';
     if(!window.cardano||!window.cardano.lace)throw new Error('Lace not found. Install Lace and set it to Mainnet.');
     const api=await window.cardano.lace.enable();
