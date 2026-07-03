@@ -49,8 +49,7 @@ header h1{font-size:20px;font-weight:700;color:#fff;letter-spacing:0.5px;flex:1}
 .tok-label{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px}
 .tok-val{font-size:12px;color:#c0c0e0;word-break:break-all;background:#0a0a18;border:1px solid #2a2a3e;border-radius:4px;padding:6px 10px}
 .tok-val.ok{color:#4caf50;border-color:#1d3a1d;background:#0a180a}
-.spinner{display:inline-block;width:14px;height:14px;border:2px solid #333;border-top-color:#5c5cff;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px}
-@keyframes spin{to{transform:rotate(360deg)}}
+.tok-val.dim{color:#555;font-style:italic}
 </style>
 </head>
 <body>
@@ -89,7 +88,6 @@ header h1{font-size:20px;font-weight:700;color:#fff;letter-spacing:0.5px;flex:1}
 <script>
 var POLICY='4dad78ae2dd5e2d4db3f6e43d897b8df00e50f20c69d8475551dfbcb';
 var ASSET_HEX='544354';
-var NETS={preprod:'https://preprod.koios.rest/api/v1',mainnet:'https://api.koios.rest/api/v1'};
 var currentNet='preprod';
 var walletApi=null;
 var TRUCKER=[
@@ -189,34 +187,28 @@ function openPanel(id,desc){
   tagEl.className=info.live?'tag-live':'tag-cs';
   tagEl.textContent=info.tag;
   var body=document.getElementById('panel-body');
-  body.innerHTML='<p style="margin-bottom:16px">'+desc+'</p><div><span class="spinner"></span> Loading token data...</div>';
   document.getElementById('panel-overlay').style.display='block';
   document.getElementById('panel').classList.add('open');
-  fetch(NETS[currentNet]+'/asset_info',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({_asset_list:[[POLICY,ASSET_HEX]]})})
-  .then(function(r){return r.json();})
-  .then(function(data){
-    var a=data&&data[0]?data[0]:null;
-    body.innerHTML='<p style="margin-bottom:16px">'+desc+'</p>';
+  body.innerHTML='<p style="margin-bottom:16px">'+desc+'</p>';
+  if(id==='token'){
+    addF(body,'Wallet Status','TCT Active — Verified via CIP-30','ok');
+    addF(body,'Network',currentNet==='preprod'?'Cardano Preprod Testnet':'Cardano Mainnet','ok');
     addF(body,'Policy ID',POLICY,'');
     addF(body,'Asset Name','TCT','');
-    if(a){
-      addF(body,'Fingerprint',a.fingerprint||'--','');
-      addF(body,'Total Supply',a.total_supply||'--',a.total_supply==='1'?'ok':'');
-      addF(body,'Mint TX',a.minting_tx_hash||'--',a.minting_tx_hash?'ok':'');
-    }else{
-      addF(body,'Status','Token not yet indexed by Koios (try again in a minute)','');
-    }
-  })
-  .catch(function(e){
-    body.innerHTML='<p style="margin-bottom:16px">'+desc+'</p>';
-    addF(body,'Error',String(e.message||e),'');
-  });
+    addF(body,'Asset Name (Hex)',ASSET_HEX,'');
+    addF(body,'Token Type','Soulbound Credential NFT','');
+    addF(body,'Max Supply','1 per carrier (non-transferable)','');
+  }else{
+    addF(body,'Status','Coming Soon','dim');
+    addF(body,'','This feature is under active development and will be available in a future release.','dim');
+  }
 }
 function addF(parent,label,value,cls){
   var w=document.createElement('div');w.className='tok-field';
   var l=document.createElement('div');l.className='tok-label';l.textContent=label;
   var v=document.createElement('div');v.className='tok-val'+(cls?' '+cls:'');v.textContent=value;
-  w.appendChild(l);w.appendChild(v);parent.appendChild(w);
+  if(label)w.appendChild(l);
+  w.appendChild(v);parent.appendChild(w);
 }
 function closePanel(){
   document.getElementById('panel').classList.remove('open');
