@@ -6,10 +6,14 @@
 <title>Mint TCT - Mainnet</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#0a0a12;color:#e0e0e0;font-family:Helvetica,Arial,sans-serif;max-width:600px;margin:80px auto;padding:0 24px}
+body{background:#0a0a12;color:#e0e0e0;font-family:Helvetica,Arial,sans-serif;max-width:600px;margin:60px auto;padding:0 24px}
 h1{color:#fff;font-size:24px;margin-bottom:8px}
-.sub{color:#555;font-size:13px;line-height:1.6;margin-bottom:32px}
-#btn-mint{background:#5c5cff;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;padding:12px 28px;cursor:pointer}
+.sub{color:#555;font-size:13px;line-height:1.6;margin-bottom:28px}
+label{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px}
+input{width:100%;background:#0a0a18;border:1px solid #2a2a3e;border-radius:6px;color:#c0c0e0;font-size:13px;padding:8px 12px;margin-bottom:6px}
+.hint{font-size:11px;color:#444;margin-bottom:20px}
+.hint a{color:#5c5cff}
+#btn-mint{background:#5c5cff;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;padding:12px 28px;cursor:pointer;margin-top:4px}
 #btn-mint:hover{background:#7070ff}
 #btn-mint:disabled{background:#333;color:#666;cursor:not-allowed}
 #log{margin-top:24px}
@@ -19,85 +23,69 @@ h1{color:#fff;font-size:24px;margin-bottom:8px}
 .val.ok{color:#4caf50;border-color:#1d3a1d;background:#0a180a}
 .val.warn{color:#f0a050;border-color:#5a3a10;background:#1a100a}
 .msg{font-size:13px;color:#888;margin-top:12px}
-.err{font-size:13px;color:#cf6679;margin-top:12px}
+.err{font-size:13px;color:#cf6679;margin-top:12px;background:#1a0808;border:1px solid #3a1010;border-radius:4px;padding:8px 12px}
 </style>
 </head>
 <body>
-<h1>Mint TCT — Mainnet</h1>
-<p class="sub">Connects your Lace wallet on mainnet and mints 1 Trucker Credential Token. Costs ~0.2 ADA in fees. Make sure Lace is set to Mainnet before clicking.</p>
-<button id="btn-mint">Connect Lace &amp; Mint TCT</button>
+<h1>Mint TCT - Mainnet</h1>
+<p class="sub">Mints 1 Trucker Credential Token on Cardano mainnet using your Lace wallet. Requires ~0.2 ADA in fees and a free Blockfrost API key.</p>
+
+<label>Blockfrost Mainnet Project ID</label>
+<input id="bf-key" type="text" placeholder="mainnetXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"/>
+<p class="hint">Free key at <a href="https://blockfrost.io" target="_blank">blockfrost.io</a> - New project - Mainnet - copy Project ID</p>
+
+<button id="btn-mint">Connect Lace and Mint TCT</button>
 <div id="log"></div>
 
 <script type="module">
-import{Lucid,Koios,fromText}from'https://esm.sh/lucid-cardano@0.10.7';
+import{Lucid,Blockfrost,fromText}from'https://unpkg.com/lucid-cardano@0.10.11/web/mod.js';
 
-const KNOWN_POLICY='4dad78ae2dd5e2d4db3f6e43d897b8df00e50f20c69d8475551dfbcb';
+const KNOWN='4dad78ae2dd5e2d4db3f6e43d897b8df00e50f20c69d8475551dfbcb';
 const btn=document.getElementById('btn-mint');
 const log=document.getElementById('log');
+const bfIn=document.getElementById('bf-key');
 
-function msg(text){
-  const p=document.createElement('p');p.className='msg';p.textContent=text;log.appendChild(p);return p;
-}
-function field(label,value,cls){
+function msg(t){const p=document.createElement('p');p.className='msg';p.textContent=t;log.appendChild(p);return p;}
+function field(lbl,val,cls){
   const w=document.createElement('div');w.className='field';
-  const l=document.createElement('div');l.className='lbl';l.textContent=label;
-  const v=document.createElement('div');v.className='val'+(cls?' '+cls:'');v.textContent=value;
+  const l=document.createElement('div');l.className='lbl';l.textContent=lbl;
+  const v=document.createElement('div');v.className='val'+(cls?' '+cls:'');v.textContent=val;
   w.appendChild(l);w.appendChild(v);log.appendChild(w);
 }
 
 btn.addEventListener('click',async()=>{
-  btn.disabled=true;
-  log.innerHTML='';
-  const m=msg('Initializing Lucid on Mainnet...');
+  const key=bfIn.value.trim();
+  if(!key){log.innerHTML='<p class="err">Enter Blockfrost Project ID first.</p>';return;}
+  btn.disabled=true;log.innerHTML='';
+  const m=msg('Initializing...');
   try{
-    const lucid=await Lucid.new(new Koios('https://api.koios.rest/api/v1'),'Mainnet');
-    m.textContent='Connecting to Lace wallet...';
-    const cardano=window.cardano;
-    if(!cardano?.lace)throw new Error('Lace wallet not found. Make sure the Lace extension is installed.');
-    const api=await cardano.lace.enable();
+    const lucid=await Lucid.new(new Blockfrost('https://cardano-mainnet.blockfrost.io/api/v0',key),'Mainnet');
+    m.textContent='Connecting Lace...';
+    if(!window.cardano||!window.cardano.lace)throw new Error('Lace not found. Install Lace and set it to Mainnet.');
+    const api=await window.cardano.lace.enable();
     lucid.selectWallet(api);
-
     m.textContent='Reading wallet...';
     const addr=await lucid.wallet.address();
     field('Address',addr,'');
-
-    m.textContent='Deriving minting policy...';
-    const{paymentCredential}=lucid.utils.getAddressDetails(addr);
-    const policy=lucid.utils.nativeScriptFromJson({type:'sig',keyHash:paymentCredential.hash});
-    const policyId=lucid.utils.mintingPolicyToId(policy);
-    const assetHex=fromText('TCT');
-    const unit=policyId+assetHex;
-
-    field('Policy ID',policyId,policyId===KNOWN_POLICY?'ok':'warn');
-
-    if(policyId===KNOWN_POLICY){
-      field('Loadboard','Policy matches preprod — ~no loadboard update needed','ok');
-    }else{
-      field('Loadboard Update','New policy ID detected — paste it in chat after mint','warn');
-    }
-
-    m.textContent='Building transaction...';
-    const tx=await lucid.newTx()
-      .mintAssets({[unit]:1n})
-      .attachMintingPolicy(policy)
-      .addSigner(addr)
-      .complete();
-
+    m.textContent='Deriving policy...';
+    const det=lucid.utils.getAddressDetails(addr);
+    const pol=lucid.utils.nativeScriptFromJson({type:'sig',keyHash:det.paymentCredential.hash});
+    const pid=lucid.utils.mintingPolicyToId(pol);
+    const unit=pid+fromText('TCT');
+    field('Policy ID',pid,pid===KNOWN?'ok':'warn');
+    field(pid===KNOWN?'Match':'Note',pid===KNOWN?'Same as preprod - no loadboard changes needed':'New policy - share it so loadboard can be updated',pid===KNOWN?'ok':'warn');
+    m.textContent='Building tx...';
+    const tx=await lucid.newTx().mintAssets({[unit]:1n}).attachMintingPolicy(pol).addSigner(addr).complete();
     m.textContent='Sign in Lace...';
     const signed=await tx.sign().complete();
-
-    m.textContent='Submitting to mainnet...';
-    const txHash=await signed.submit();
-
+    m.textContent='Submitting...';
+    const hash=await signed.submit();
     m.remove();
-    field('TX Hash',txHash,'ok');
-    field('Status','TCT minted on Mainnet ✓','ok');
-
+    field('TX Hash',hash,'ok');
+    field('Status','TCT minted on Mainnet','ok');
   }catch(e){
     m.remove();
-    const err=document.createElement('p');err.className='err';
-    err.textContent='Error: '+e.message;
-    log.appendChild(err);
+    const er=document.createElement('p');er.className='err';er.textContent='Error: '+e.message;log.appendChild(er);
     btn.disabled=false;
   }
 });
