@@ -48,7 +48,6 @@ input{width:100%;background:#0a0a18;border:1px solid #2a2a3e;border-radius:6px;c
 import{Lucid,Blockfrost,fromText}from'https://unpkg.com/lucid-cardano@0.10.11/web/mod.js';
 
 const KNOWN='4dad78ae2dd5e2d4db3f6e43d897b8df00e50f20c69d8475551dfbcb';
-const WALLETS=['lace','eternl','nami','typhon','vespr','flint','begin','nufi'];
 const btn=document.getElementById('btn-mint');
 const log=document.getElementById('log');
 const bfIn=document.getElementById('bfkey');
@@ -77,12 +76,16 @@ window.fetch=async function(url,...args){
   return res;
 };
 
-// Detect installed wallets
-setTimeout(()=>{
-  const found=WALLETS.filter(w=>window.cardano&&window.cardano[w]);
+// Detect installed wallets - scan ALL keys in window.cardano
+function detectWallets(){
+  if(!window.cardano){
+    wList.innerHTML='<p class="hint" style="margin:0;color:#cf6679">No Cardano wallet found.</p>';
+    return;
+  }
+  const found=Object.keys(window.cardano).filter(k=>window.cardano[k]&&typeof window.cardano[k].enable==='function');
   wList.innerHTML='';
   if(!found.length){
-    wList.innerHTML='<p class="hint" style="margin:0;color:#cf6679">No Cardano wallet found. Install Lace or Eternl.</p>';
+    wList.innerHTML='<p class="hint" style="margin:0;color:#cf6679">No Cardano wallet found. Make sure your wallet extension is unlocked.</p>';
     return;
   }
   found.forEach(w=>{
@@ -97,7 +100,8 @@ setTimeout(()=>{
     wList.appendChild(b);
     if(!selectedWallet){b.click();}
   });
-},500);
+}
+setTimeout(detectWallets,1000);
 
 function msg(t){const p=document.createElement('p');p.className='msg';p.textContent=t;log.appendChild(p);return p;}
 function field(lbl,val,cls){
