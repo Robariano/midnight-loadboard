@@ -32,7 +32,7 @@ input{width:100%;background:#0a0a18;border:1px solid #2a2a3e;border-radius:6px;c
 
 <label>Blockfrost Mainnet Project ID</label>
 <input id="bfkey" type="text" placeholder="mainnetXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"/>
-<p class="hint">Free key at <a href="https://blockfrost.io" target="_blank">blockfrost.io</a> - Sign up - New project - Mainnet - copy Project ID</p>
+<p class="hint">Free key at <a href="https://blockfrost.io" target="_blank">blockfrost.io</a> - New project - Mainnet - copy Project ID</p>
 
 <button id="btn-mint">Connect Lace and Mint TCT</button>
 <div id="log"></div>
@@ -44,6 +44,29 @@ const KNOWN='4dad78ae2dd5e2d4db3f6e43d897b8df00e50f20c69d8475551dfbcb';
 const btn=document.getElementById('btn-mint');
 const log=document.getElementById('log');
 const bfIn=document.getElementById('bfkey');
+
+// Patch fetch to truncate Conway-era cost model so Lucid v0.10.11 doesn't crash
+const _fetch=window.fetch.bind(window);
+window.fetch=async function(url,...args){
+  const res=await _fetch(url,...args);
+  if(typeof url==='string'&&url.includes('epochs/latest/parameters')){
+    try{
+      const data=await res.clone().json();
+      if(data.cost_models){
+        // Lucid expects max 166 ops for PlutusV1/V2; Conway adds more - truncate
+        ['PlutusV1','PlutusV2'].forEach(v=>{
+          if(data.cost_models[v]){
+            const entries=Object.entries(data.cost_models[v]).slice(0,166);
+            data.cost_models[v]=Object.fromEntries(entries);
+          }
+        });
+        delete data.cost_models['PlutusV3'];
+      }
+      return new Response(JSON.stringify(data),{status:res.status,statusText:res.statusText,headers:res.headers});
+    }catch(e){return res;}
+  }
+  return res;
+};
 
 function msg(t){const p=document.createElement('p');p.className='msg';p.textContent=t;log.appendChild(p);return p;}
 function field(lbl,val,cls){
