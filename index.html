@@ -36,6 +36,23 @@
   .cred-info{font-size:12px;background:#0f1a0f;border:1px solid #1d3a1d;border-radius:6px;padding:10px 14px;color:#4caf50;margin-top:16px;word-break:break-all}
   .no-cred{font-size:12px;background:#1a0f0f;border:1px solid #3a1d1d;border-radius:6px;padding:10px 14px;color:#cf6679;margin-top:16px}
   .section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#555;margin-bottom:12px}
+
+  @media(max-width:600px){
+    header{padding:12px 16px;flex-wrap:wrap;gap:8px}
+    header h1{font-size:16px}
+    .net-btn{font-size:11px;padding:4px 10px}
+    #connect-section{margin-top:40px;padding:0 16px}
+    #connect-section h2{font-size:22px}
+    #connect-section p{font-size:14px}
+    #dashboard{padding:16px}
+    .cards{grid-template-columns:1fr}
+    .card{padding:16px}
+    #btn-connect{width:100%;font-size:14px}
+    #btn-demo{width:100%;font-size:14px;margin-top:12px}
+  }
+  #btn-demo{background:transparent;color:#5c5cff;border:1px solid #5c5cff;border-radius:8px;font-size:15px;font-weight:600;padding:12px 28px;cursor:pointer;margin-top:12px}
+  #btn-demo:hover{background:#1a1a3a}
+  .demo-banner{background:#1a1a2a;border:1px solid #3a3a6a;border-radius:8px;padding:10px 16px;font-size:12px;color:#8888cc;margin-bottom:20px;text-align:center}
 </style>
 </head>
 <body>
@@ -52,6 +69,7 @@
   <p>Connect your Cardano wallet to access the loadboard. TCT holders are routed to the Trucker Dashboard automatically.</p>
   <button id="btn-connect" onclick="connectWallet()">Connect Wallet</button>
   <div id="status"></div>
+<button id="btn-demo" onclick="showDemo()">Preview Demo (No Wallet)</button>
 </div>
 
 <div id="dashboard">
@@ -158,6 +176,12 @@ function showDashboard(hasTCT,addrDisplay,walletName,policy){
     :'<div class="no-cred">✗ No TCT found · Policy: '+policy+'</div>';
   const cards=hasTCT?TRUCKER_CARDS:BROKER_CARDS;
   document.getElementById('cards').innerHTML=cards.map(function(c){var btn;if(c.link&&c.link.indexOf('http')===0){btn='<button class="card-btn" onclick="window.open(\''+c.link+'\',\'_blank\')">'+c.action+'</button>';}else if(c.link){btn='<button class="card-btn" onclick="location.href=\''+c.link+'\'">'+c.action+'</button>';}else{btn='<button class="card-btn">'+c.action+'</button>';}return '<div class="card"><h3>'+c.title+'</h3><p>'+c.desc+'</p>'+btn+'</div>';}).join('');
+}
+
+function showDemo(){
+  showDashboard(true,'demo...wallet','demo','31dff13b553a6214cbcc1aa93884fd4351700b6b4da3bd63894cbf5c');
+  document.getElementById('cred-info').innerHTML='<div class="demo-banner">DEMO MODE — Connect a real wallet to verify your TCT</div>';
+  document.getElementById('wallet-info').textContent='Demo Mode - mainnet';
 }
 </script>
 </body>
