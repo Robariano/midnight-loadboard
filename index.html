@@ -157,7 +157,7 @@ function showDashboard(hasTCT,addrDisplay,walletName,policy){
     ?'<div class="cred-info">✓ TCT Active · Policy: '+policy+'</div>'
     :'<div class="no-cred">✗ No TCT found · Policy: '+policy+'</div>';
   const cards=hasTCT?TRUCKER_CARDS:BROKER_CARDS;
-  document.getElementById('cards').innerHTML=cards.map(c=>'<div class="card"><h3>'+c.title+'</h3><p>'+c.desc+'</p><button class="card-btn"'+(c.link?' onclick="location.href=\''  +c.link+'\'"':'')+'>'+c.action+'</button></div>').join('');
+  document.getElementById('cards').innerHTML=cards.map(function(c){var btn;if(c.link&&c.link.indexOf('http')===0){btn='<button class="card-btn" onclick="window.open(\''+c.link+'\',\'_blank\')">'+c.action+'</button>';}else if(c.link){btn='<button class="card-btn" onclick="location.href=\''+c.link+'\'">'+c.action+'</button>';}else{btn='<button class="card-btn">'+c.action+'</button>';}return '<div class="card"><h3>'+c.title+'</h3><p>'+c.desc+'</p>'+btn+'</div>';}).join('');
 }
 </script>
 </body>
