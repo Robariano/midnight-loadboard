@@ -5,70 +5,160 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Midnight Loadboard</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:#0a0a12;color:#e0e0e0;font-family:Helvetica,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
-header{width:100%;background:#12121e;border-bottom:1px solid #2a2a3e;padding:16px 32px;display:flex;align-items:center;gap:12px}
-header h1{font-size:20px;font-weight:700;color:#fff}
-.network-toggle{display:flex;margin-left:auto;border:1px solid #2a2a3e;border-radius:6px;overflow:hidden}
-.net-btn{background:#12121e;color:#555;font-size:12px;font-weight:600;padding:5px 14px;cursor:pointer;border:none}
-.net-btn.active{background:#1e1e3a;color:#8888cc}
-#connect-section{margin-top:80px;text-align:center;max-width:480px;padding:0 24px}
-#connect-section h2{font-size:28px;font-weight:700;margin-bottom:12px;color:#fff}
-#connect-section p{color:#888;font-size:15px;line-height:1.6;margin-bottom:32px}
-button{cursor:pointer;border:none;border-radius:8px;font-size:15px;font-weight:600;padding:12px 28px}
-#btn-connect{background:#5c5cff;color:#fff}
-#btn-connect:disabled{background:#333;color:#666;cursor:not-allowed}
-#status{margin-top:20px;font-size:13px;color:#666;min-height:20px}
-#dashboard{display:none;width:100%;max-width:960px;padding:32px 24px}
-.dash-header{display:flex;align-items:center;gap:16px;margin-bottom:32px}
-.dash-header h2{font-size:24px;font-weight:700;color:#fff}
-.role-badge{font-size:12px;font-weight:700;border-radius:20px;padding:4px 14px}
-.role-trucker{background:#1a3a1a;color:#4caf50;border:1px solid #2d6a2d}
-.role-broker{background:#1a1a3a;color:#5c5cff;border:1px solid #2d2d6a}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-.card{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:24px}
-.card h3{font-size:16px;font-weight:700;margin-bottom:8px;color:#fff}
-.card p{font-size:13px;color:#888;line-height:1.5;margin-bottom:16px}
-.card-btn{font-size:13px;font-weight:600;color:#5c5cff;cursor:pointer;background:none;border:1px solid #5c5cff;border-radius:6px;padding:6px 14px}
-.wallet-info{font-size:12px;color:#555;margin-top:8px}
-.cred-info{font-size:12px;background:#0f1a0f;border:1px solid #1d3a1d;border-radius:6px;padding:10px 14px;color:#4caf50;margin-top:16px;word-break:break-all}
-.no-cred{font-size:12px;background:#1a0f0f;border:1px solid #3a1d1d;border-radius:6px;padding:10px 14px;color:#cf6679;margin-top:16px}
-.section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#555;margin-bottom:12px}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0a0a12;color:#e0e0e0;font-family:Helvetica,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+  header{width:100%;background:#12121e;border-bottom:1px solid #2a2a3e;padding:16px 32px;display:flex;align-items:center;gap:12px}
+  header h1{font-size:20px;font-weight:700;color:#fff;letter-spacing:0.5px}
+  .network-toggle{display:flex;gap:0;margin-left:auto;border:1px solid #2a2a3e;border-radius:6px;overflow:hidden}
+  .net-btn{background:#12121e;color:#555;font-size:12px;font-weight:600;padding:5px 14px;cursor:pointer;border:none;transition:all 0.15s}
+  .net-btn.active{background:#1e1e3a;color:#8888cc}
+  #connect-section{margin-top:80px;text-align:center;max-width:480px;padding:0 24px}
+  #connect-section h2{font-size:28px;font-weight:700;margin-bottom:12px;color:#fff}
+  #connect-section p{color:#888;font-size:15px;line-height:1.6;margin-bottom:32px}
+  button{cursor:pointer;border:none;border-radius:8px;font-size:15px;font-weight:600;padding:12px 28px;transition:all 0.15s}
+  #btn-connect{background:#5c5cff;color:#fff}
+  #btn-connect:hover{background:#7070ff}
+  #btn-connect:disabled{background:#333;color:#666;cursor:not-allowed}
+  #status{margin-top:20px;font-size:13px;color:#666;min-height:20px}
+  #dashboard{display:none;width:100%;max-width:960px;padding:32px 24px}
+  .dash-header{display:flex;align-items:center;gap:16px;margin-bottom:32px}
+  .dash-header h2{font-size:24px;font-weight:700;color:#fff}
+  .role-badge{font-size:12px;font-weight:700;border-radius:20px;padding:4px 14px}
+  .role-trucker{background:#1a3a1a;color:#4caf50;border:1px solid #2d6a2d}
+  .role-broker{background:#1a1a3a;color:#5c5cff;border:1px solid #2d2d6a}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+  .card{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:24px}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:8px;color:#fff}
+  .card p{font-size:13px;color:#888;line-height:1.5;margin-bottom:16px}
+  .card-btn{display:inline-block;font-size:13px;font-weight:600;color:#5c5cff;text-decoration:none;cursor:pointer;background:none;border:1px solid #5c5cff;border-radius:6px;padding:6px 14px}
+  .card-btn:hover{background:#1a1a3a}
+  .wallet-info{font-size:12px;color:#555;margin-top:8px}
+  .cred-info{font-size:12px;background:#0f1a0f;border:1px solid #1d3a1d;border-radius:6px;padding:10px 14px;color:#4caf50;margin-top:16px;word-break:break-all}
+  .no-cred{font-size:12px;background:#1a0f0f;border:1px solid #3a1d1d;border-radius:6px;padding:10px 14px;color:#cf6679;margin-top:16px}
+  .section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#555;margin-bottom:12px}
 </style>
 </head>
 <body>
 <header>
-<h1>Midnight Loadboard</h1>
-<div class="network-toggle">
-<button class="net-btn" id="btn-preprod" onclick="setNetwork('preprod')">Preprod</button>
-<button class="net-btn active" id="btn-mainnet" onclick="setNetwork('mainnet')">Mainnet</button>
-</div>
+  <h1>Midnight Loadboard</h1>
+  <div class="network-toggle">
+    <button class="net-btn" id="btn-preprod" onclick="setNetwork('preprod')">Preprod</button>
+    <button class="net-btn active" id="btn-mainnet" onclick="setNetwork('mainnet')">Mainnet</button>
+  </div>
 </header>
+
 <div id="connect-section">
-<h2>Connect Your Wallet</h2>
-<p>Connect your Cardano wallet to access the loadboard. TCT holders get the Trucker Dashboard.</p>
-<button id="btn-connect" onclick="connectWallet()">Connect Wallet</button>
-<div id="status"></div>
+  <h2>Connect Your Wallet</h2>
+  <p>Connect your Cardano wallet to access the loadboard. TCT holders are routed to the Trucker Dashboard automatically.</p>
+  <button id="btn-connect" onclick="connectWallet()">Connect Wallet</button>
+  <div id="status"></div>
 </div>
+
 <div id="dashboard">
-<div class="dash-header"><h2 id="dash-title">Dashboard</h2><span id="role-badge" class="role-badge"></span></div>
-<div id="wallet-info" class="wallet-info"></div>
-<div id="cred-info"></div>
-<div style="height:24px"></div>
-<div class="section-title">Actions</div>
-<div id="cards" class="cards"></div>
+  <div class="dash-header">
+    <h2 id="dash-title">Dashboard</h2>
+    <span id="role-badge" class="role-badge"></span>
+  </div>
+  <div id="wallet-info" class="wallet-info"></div>
+  <div id="cred-info"></div>
+  <div style="height:24px"></div>
+  <div class="section-title">Actions</div>
+  <div id="cards" class="cards"></div>
 </div>
+
 <script>
-var POLICIES={mainnet:'31dff13b553a6214cbcc1aa93884fd4351700b6b4da3bd63894cbf5c',preprod:'4dad78ae2dd5e2d4db3f6e43d897b8df00e50f20c69d8475551dfbcb'};
-var WALLET_PRIORITY=['eternl','lace','nami','flint','typhon','gerowallet','vespr','yoroi'];
-var currentNetwork='mainnet';
-function setNetwork(net){currentNetwork=net;document.getElementById('btn-mainnet').classList.toggle('active',net==='mainnet');document.getElementById('btn-preprod').classList.toggle('active',net==='preprod');document.getElementById('connect-section').style.display='block';document.getElementById('dashboard').style.display='none';document.getElementById('status').textContent='';document.getElementById('btn-connect').disabled=false;}
-var TRUCKER_CARDS=[{title:'Open Loads',desc:'Browse and claim available loads. Your TCT credential allows you to bid on carrier-gated loads.',action:'View Loads'},{title:'My Deliveries',desc:'Track active and completed deliveries.',action:'View Deliveries'},{title:'Reputation',desc:'Your on-chain carrier score and delivery history.',action:'View Score'},{title:'My TCT Credential',desc:'Your Trucker Credential Token is active.',action:'View Token'}];
-var BROKER_CARDS=[{title:'Post a Load',desc:'Create a new load listing. Only credentialed carriers can claim.',action:'Post Load'},{title:'My Loads',desc:'Manage active listings and confirm delivery.',action:'Manage Loads'},{title:'Carrier Registry',desc:'Browse verified carriers. All hold a valid TCT.',action:'View Registry'},{title:'Get Credentials',desc:'No TCT found. Mint one to access carrier-gated loads.',action:'Mint TCT',link:'mint.html'}];
-function setStatus(msg,color){var el=document.getElementById('status');el.textContent=msg;el.style.color=color||'#666';}
-function pickWallet(){var c=window.cardano;if(!c)return null;for(var i=0;i<WALLET_PRIORITY.length;i++){var n=WALLET_PRIORITY[i];if(c[n]&&typeof c[n].enable==='function')return n;}var keys=Object.keys(c);for(var j=0;j<keys.length;j++){var k=keys[j];if(k.length>3&&c[k]&&typeof c[k].enable==='function')return k;}return null;}
-async function connectWallet(){var btn=document.getElementById('btn-connect');btn.disabled=true;setStatus('Looking for wallet...');var cardano=window.cardano;if(!cardano){setStatus('No Cardano wallet found.','#cf6679');btn.disabled=false;return;}var walletKey=pickWallet();if(!walletKey){setStatus('No supported wallet found.','#cf6679');btn.disabled=false;return;}setStatus('Connecting to '+walletKey+'...');var api;try{api=await cardano[walletKey].enable();}catch(e){setStatus('Connection rejected.','#cf6679');btn.disabled=false;return;}setStatus('Checking credentials...');var policy=POLICIES[currentNetwork];var addrDisplay='';try{var addrs=await api.getUsedAddresses();if(addrs&&addrs.length>0){var hex=addrs[0];addrDisplay=hex.substring(0,12)+'...'+hex.substring(hex.length-8);}}catch(e){}var hasTCT=false;try{var utxos=await api.getUtxos();if(utxos&&utxos.length>0){for(var i=0;i<utxos.length;i++){var s=typeof utxos[i]==='string'?utxos[i]:JSON.stringify(utxos[i]);if(s.indexOf(policy)>=0){hasTCT=true;break;}}}try{var bal=await api.getBalance();if(bal&&bal.indexOf&&bal.indexOf(policy)>=0)hasTCT=true;}catch(e){}}catch(e){setStatus('Could not read UTxOs: '+e.message,'#cf6679');}showDashboard(hasTCT,addrDisplay,walletKey,policy);}
-function showDashboard(hasTCT,addrDisplay,walletName,policy){document.getElementById('connect-section').style.display='none';document.getElementById('dashboard').style.display='block';document.getElementById('dash-title').textContent=hasTCT?'Trucker Dashboard':'Broker Dashboard';var badge=document.getElementById('role-badge');badge.textContent=hasTCT?'TCT Verified Carrier':'Broker / Shipper';badge.className='role-badge '+(hasTCT?'role-trucker':'role-broker');if(addrDisplay)document.getElementById('wallet-info').textContent=walletName+' - '+addrDisplay+' - '+currentNetwork;var credEl=document.getElementById('cred-info');credEl.innerHTML=hasTCT?'<div class="cred-info">TCT Active - Policy: '+policy+'</div>':'<div class="no-cred">No TCT found - Policy: '+policy+'</div>';var cards=hasTCT?TRUCKER_CARDS:BROKER_CARDS;var html='';for(var i=0;i<cards.length;i++){var c=cards[i];html+='<div class="card"><h3>'+c.title+'</h3><p>'+c.desc+'</p>';if(c.link){html+='<button class="card-btn" onclick="location.href=\''+c.link+'\'">'+c.action+'</button>';}else{html+='<button class="card-btn">'+c.action+'</button>';}html+='</div>';}document.getElementById('cards').innerHTML=html;}
+const POLICIES = {
+  mainnet: '31dff13b553a6214cbcc1aa93884fd4351700b6b4da3bd63894cbf5c',
+  preprod: '4dad78ae2dd5e2d4db3f6e43d897b8df00e50f20c69d8475551dfbcb'
+};
+
+// Preferred wallet order — known CIP-30 wallets first
+const WALLET_PRIORITY = ['eternl','lace','nami','flint','typhon','gerowallet','vespr','yoroi'];
+
+let currentNetwork = 'mainnet';
+
+function setNetwork(net) {
+  currentNetwork = net;
+  document.getElementById('btn-mainnet').classList.toggle('active', net==='mainnet');
+  document.getElementById('btn-preprod').classList.toggle('active', net==='preprod');
+  document.getElementById('connect-section').style.display='block';
+  document.getElementById('dashboard').style.display='none';
+  document.getElementById('status').textContent='';
+  document.getElementById('btn-connect').disabled=false;
+}
+
+const TRUCKER_CARDS = [
+  {title:'🚛 Open Loads',desc:'Browse and claim available loads. Your TCT credential allows you to bid on carrier-gated loads.',action:'View Loads'},
+  {title:'📦 My Deliveries',desc:'Track your active and completed deliveries. View payment status and delivery confirmations.',action:'View Deliveries'},
+  {title:'⭐ Reputation',desc:'Your on-chain carrier score and delivery history. Build your reputation to unlock higher-value loads.',action:'View Score'},
+  {title:'My TCT Credential',desc:'Your Trucker Credential Token (TCT) is active on Cardano mainnet. Click to view your token on the blockchain explorer.',action:'View Token',link:'https://cardanoscan.io/token/31dff13b553a6214cbcc1aa93884fd4351700b6b4da3bd63894cbf5c544354'}
+];
+
+const BROKER_CARDS = [
+  {title:'📋 Post a Load',desc:'Create a new load listing. Set your rate, route, and requirements. Only credentialed carriers can claim.',action:'Post Load'},
+  {title:'📊 My Loads',desc:'Manage your active listings, reveal bids, and confirm delivery for loads you have posted.',action:'Manage Loads'},
+  {title:'📁 Carrier Registry',desc:'Browse verified carriers in the network. All carriers hold a valid Trucker Credential Token.',action:'View Registry'},
+  {title:'🔑 Get Credentials',desc:"You don't have a Trucker Credential Token. Mint one to access carrier-gated loads on the network.",action:'Mint TCT',link:'mint.html'}
+];
+
+function setStatus(msg,color){const el=document.getElementById('status');el.textContent=msg;el.style.color=color||'#666';}
+
+function pickWallet() {
+  const cardano = window.cardano;
+  if (!cardano) return null;
+  // Try known wallets in priority order
+  for (const name of WALLET_PRIORITY) {
+    if (cardano[name] && typeof cardano[name].enable === 'function') return name;
+  }
+  // Fall back to any key with enable() that isn't 'app' or single-char names
+  return Object.keys(cardano).find(k => k.length > 3 && cardano[k] && typeof cardano[k].enable === 'function') || null;
+}
+
+async function connectWallet(){
+  const btn=document.getElementById('btn-connect');
+  btn.disabled=true;
+  setStatus('Looking for wallet…');
+  const cardano=window.cardano;
+  if(!cardano){setStatus('No Cardano wallet found. Please install Lace or Eternl.','#cf6679');btn.disabled=false;return;}
+  const walletKey = pickWallet();
+  if(!walletKey){setStatus('No supported wallet found.','#cf6679');btn.disabled=false;return;}
+  setStatus('Connecting to '+walletKey+'…');
+  let api;
+  try{api=await cardano[walletKey].enable();}
+  catch(e){setStatus('Connection rejected.','#cf6679');btn.disabled=false;return;}
+  setStatus('Checking credentials…');
+  const policy=POLICIES[currentNetwork];
+  let addrDisplay='';
+  try{const addrs=await api.getUsedAddresses();if(addrs&&addrs.length>0){const hex=addrs[0];addrDisplay=hex.substring(0,12)+'…'+hex.substring(hex.length-8);}}catch(e){}
+  let hasTCT=false;
+  try{
+    const utxos=await api.getUtxos();
+    if(utxos&&utxos.length>0){
+      for(const u of utxos){
+        const s=typeof u==='string'?u:JSON.stringify(u);
+        if(s.includes(policy)){hasTCT=true;break;}
+      }
+    }
+    try{const bal=await api.getBalance();if(bal&&bal.includes&&bal.includes(policy))hasTCT=true;}catch(e){}
+  }catch(e){setStatus('Could not read UTxOs: '+e.message,'#cf6679');}
+  showDashboard(hasTCT,addrDisplay,walletKey,policy);
+}
+
+function showDashboard(hasTCT,addrDisplay,walletName,policy){
+  document.getElementById('connect-section').style.display='none';
+  document.getElementById('dashboard').style.display='block';
+  document.getElementById('dash-title').textContent=hasTCT?'Trucker Dashboard':'Broker Dashboard';
+  const badge=document.getElementById('role-badge');
+  badge.textContent=hasTCT?'TCT Verified Carrier':'Broker / Shipper';
+  badge.className='role-badge '+(hasTCT?'role-trucker':'role-broker');
+  if(addrDisplay)document.getElementById('wallet-info').textContent=walletName+' · '+addrDisplay+' · '+currentNetwork;
+  const credEl=document.getElementById('cred-info');
+  credEl.innerHTML=hasTCT
+    ?'<div class="cred-info">✓ TCT Active · Policy: '+policy+'</div>'
+    :'<div class="no-cred">✗ No TCT found · Policy: '+policy+'</div>';
+  const cards=hasTCT?TRUCKER_CARDS:BROKER_CARDS;
+  document.getElementById('cards').innerHTML=cards.map(c=>'<div class="card"><h3>'+c.title+'</h3><p>'+c.desc+'</p><button class="card-btn"'+(c.link?' onclick="location.href=\''  +c.link+'\'"':'')+'>'+c.action+'</button></div>').join('');
+}
 </script>
 </body>
 </html>
