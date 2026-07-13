@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Get Verified — Midnight Loadboard</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0a0a12;color:#e0e0e0;font-family:Helvetica,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+  header{width:100%;background:#12121e;border-bottom:1px solid #2a2a3e;padding:16px 32px;display:flex;align-items:center;gap:12px}
+  header h1{font-size:20px;font-weight:700;color:#fff;letter-spacing:0.5px}
+  header a{color:#e0e0e0;text-decoration:none}
+  header a:hover{color:#5c5cff}
+  .nav-link{margin-left:auto;font-size:13px;font-weight:600;color:#5c5cff;text-decoration:none;border:1px solid #5c5cff;border-radius:6px;padding:6px 14px}
+  .nav-link:hover{background:#1a1a3a}
+
+  .hero{width:100%;max-width:640px;padding:60px 24px 32px;text-align:center}
+  .hero h2{font-size:30px;font-weight:700;color:#fff;margin-bottom:12px}
+  .hero p{color:#888;font-size:15px;line-height:1.7;margin-bottom:8px}
+
+  .badge{display:inline-block;background:#1a1a3a;border:1px solid #5c5cff;border-radius:20px;padding:6px 18px;font-size:12px;font-weight:700;color:#5c5cff;margin-bottom:24px;letter-spacing:0.5px}
+
+  .steps{width:100%;max-width:640px;padding:0 24px 32px;display:flex;flex-direction:column;gap:16px}
+  .step{background:#12121e;border:1px solid #2a2a3e;border-radius:10px;padding:18px 20px;display:flex;gap:16px;align-items:flex-start}
+  .step-num{background:#5c5cff;color:#fff;font-size:13px;font-weight:700;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+  .step-text h4{font-size:14px;font-weight:700;color:#fff;margin-bottom:4px}
+  .step-text p{font-size:13px;color:#888;line-height:1.5}
+
+  .form-wrap{width:100%;max-width:640px;padding:0 24px 60px}
+  .form-card{background:#12121e;border:1px solid #2a2a3e;border-radius:14px;padding:32px}
+  .form-card h3{font-size:18px;font-weight:700;color:#fff;margin-bottom:24px}
+
+  .form-group{margin-bottom:18px}
+  .form-group label{display:block;font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px}
+  .form-group input,.form-group select,.form-group textarea{width:100%;background:#0a0a12;border:1px solid #2a2a3e;border-radius:8px;color:#e0e0e0;font-size:14px;padding:11px 14px;outline:none;font-family:Helvetica,Arial,sans-serif}
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#5c5cff}
+  .form-group select option{background:#0a0a12}
+  .form-group textarea{resize:vertical;min-height:80px}
+
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+  .upload-note{font-size:12px;color:#555;margin-top:6px;line-height:1.5}
+
+  .divider{border:none;border-top:1px solid #1a1a2e;margin:24px 0}
+
+  #btn-submit{background:#5c5cff;color:#fff;width:100%;font-size:15px;font-weight:700;padding:14px;border-radius:8px;border:none;cursor:pointer;margin-top:8px}
+  #btn-submit:hover{background:#7070ff}
+  #btn-submit:disabled{background:#333;color:#666;cursor:not-allowed}
+
+  #form-thanks{display:none;background:#0f1a0f;border:1px solid #1d3a1d;border-radius:10px;padding:24px;color:#4caf50;font-size:15px;text-align:center;margin-top:16px;line-height:1.7}
+
+  .disclaimer{font-size:12px;color:#444;text-align:center;margin-top:16px;line-height:1.6}
+
+  @media(max-width:600px){
+    header{padding:12px 16px}
+    .hero{padding:40px 16px 24px}
+    .hero h2{font-size:24px}
+    .steps{padding:0 16px 24px}
+    .form-wrap{padding:0 16px 40px}
+    .form-row{grid-template-columns:1fr}
+    .form-card{padding:20px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="index.html"><h1>Midnight Loadboard</h1></a>
+  <a href="index.html" class="nav-link">Back to Loadboard</a>
+</header>
+
+<div class="hero">
+  <div class="badge">TCT Verified Carrier Program</div>
+  <h2>Get Your Carrier Credential</h2>
+  <p>Submit your documents below to join the Midnight Loadboard verified carrier network. Once approved, you'll receive a Trucker Credential Token (TCT) — a permanent digital credential on the Cardano blockchain that proves your CDL, insurance, and FMCSA authority to every shipper in the network.</p>
+  <p style="margin-top:12px;color:#5c5cff;font-size:14px;font-weight:600;">Verification is free. No fees. No subscriptions.</p>
+</div>
+
+<div class="steps">
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-text">
+      <h4>Submit Your Documents</h4>
+      <p>Fill out the form below with your information and paste links to your documents. We'll review everything within 24-48 hours.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-text">
+      <h4>Set Up Your Wallet</h4>
+      <p>Download the Eternl wallet app and create your carrier account. We'll send you simple instructions after your documents are approved.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-text">
+      <h4>Receive Your TCT</h4>
+      <p>Once verified, your Trucker Credential Token is minted and sent directly to your wallet. You're now in the network and can claim loads.</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-text">
+      <h4>Get Paid Fast</h4>
+      <p>TCT carriers on Midnight Loadboard receive payment within 7 days of delivery — guaranteed. No NET30, no factoring companies, no chasing brokers.</p>
+    </div>
+  </div>
+</div>
+
+<div class="form-wrap">
+  <div class="form-card">
+    <h3>Carrier Verification Form</h3>
+
+    <form id="verify-form" action="https://formspree.io/f/xjgqnbkj" method="POST">
+      <input type="hidden" name="_subject" value="New TCT Carrier Verification Request"/>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>First Name *</label>
+          <input type="text" name="first_name" placeholder="First name" required/>
+        </div>
+        <div class="form-group">
+          <label>Last Name *</label>
+          <input type="text" name="last_name" placeholder="Last name" required/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Email Address *</label>
+        <input type="email" name="email" placeholder="your@email.com" required/>
+      </div>
+
+      <div class="form-group">
+        <label>Phone Number *</label>
+        <input type="tel" name="phone" placeholder="(555) 555-5555" required/>
+      </div>
+
+      <hr class="divider"/>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>CDL Class *</label>
+          <select name="cdl_class" required>
+            <option value="" disabled selected>Select class</option>
+            <option value="Class A">CDL Class A</option>
+            <option value="Class B">CDL Class B</option>
+            <option value="Class C">CDL Class C</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>CDL State *</label>
+          <input type="text" name="cdl_state" placeholder="e.g. CO" required/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Equipment Type *</label>
+        <select name="equipment" required>
+          <option value="" disabled selected>Select equipment</option>
+          <option value="Dry Van">Dry Van</option>
+          <option value="Flatbed">Flatbed</option>
+          <option value="Reefer">Reefer</option>
+          <option value="Step Deck">Step Deck</option>
+          <option value="RGN">RGN / Lowboy</option>
+          <option value="Tanker">Tanker</option>
+          <option value="Box Truck">Box Truck</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Lanes You Run *</label>
+        <input type="text" name="lanes" placeholder="e.g. Colorado, New Mexico, Southwest region" required/>
+      </div>
+
+      <hr class="divider"/>
+
+      <div class="form-group">
+        <label>MC Number (if applicable)</label>
+        <input type="text" name="mc_number" placeholder="MC-123456"/>
+      </div>
+
+      <div class="form-group">
+        <label>DOT Number (if applicable)</label>
+        <input type="text" name="dot_number" placeholder="DOT-789012"/>
+      </div>
+
+      <div class="form-group">
+        <label>Insurance Company *</label>
+        <input type="text" name="insurance_company" placeholder="e.g. Great West Casualty" required/>
+      </div>
+
+      <div class="form-group">
+        <label>Insurance Policy Number *</label>
+        <input type="text" name="insurance_policy" placeholder="Policy number" required/>
+      </div>
+
+      <hr class="divider"/>
+
+      <div class="form-group">
+        <label>Years of Driving Experience *</label>
+        <select name="experience" required>
+          <option value="" disabled selected>Select years</option>
+          <option value="Less than 1 year">Less than 1 year</option>
+          <option value="1-3 years">1-3 years</option>
+          <option value="3-5 years">3-5 years</option>
+          <option value="5-10 years">5-10 years</option>
+          <option value="10+ years">10+ years</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Anything else we should know?</label>
+        <textarea name="notes" placeholder="Additional information, special equipment, endorsements, etc."></textarea>
+      </div>
+
+      <hr class="divider"/>
+
+      <div class="form-group">
+        <label>How did you hear about Midnight Loadboard?</label>
+        <select name="referral">
+          <option value="" disabled selected>Select one</option>
+          <option value="Facebook">Facebook Group</option>
+          <option value="YouTube">YouTube</option>
+          <option value="Truck Stop">Truck Stop</option>
+          <option value="Word of Mouth">Word of Mouth</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <button type="submit" id="btn-submit">Submit Verification Request</button>
+    </form>
+
+    <div id="form-thanks">
+      ✓ Verification request received!<br/><br/>
+      We'll review your information and follow up within 24-48 hours with next steps for your wallet setup and TCT minting.<br/><br/>
+      <strong style="color:#fff;">Welcome to Midnight Loadboard.</strong>
+    </div>
+
+    <p class="disclaimer">Your information is used only for carrier verification purposes. Midnight Loadboard does not sell or share your data. Verification is free — you will never be charged to join the network.</p>
+  </div>
+</div>
+
+<script>
+document.getElementById('verify-form').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const btn = document.getElementById('btn-submit');
+  btn.textContent = 'Submitting…';
+  btn.disabled = true;
+  try {
+    const resp = await fetch(this.action, {
+      method: 'POST',
+      body: new FormData(this),
+      headers: {Accept: 'application/json'}
+    });
+    if(resp.ok){
+      this.style.display = 'none';
+      document.getElementById('form-thanks').style.display = 'block';
+    } else {
+      btn.textContent = 'Try Again';
+      btn.disabled = false;
+    }
+  } catch(e){
+    btn.textContent = 'Try Again';
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
