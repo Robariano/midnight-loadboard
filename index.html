@@ -9,8 +9,11 @@
   body{background:#0a0a12;color:#e0e0e0;font-family:Helvetica,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
   header{width:100%;background:#12121e;border-bottom:1px solid #2a2a3e;padding:16px 32px;display:flex;align-items:center;gap:12px}
   header h1{font-size:20px;font-weight:700;color:#fff;letter-spacing:0.5px}
-  .header-verify{margin-left:auto;font-size:12px;font-weight:700;color:#4caf50;text-decoration:none;border:1px solid #4caf50;border-radius:6px;padding:5px 12px}
+  .header-nav{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .header-verify{font-size:12px;font-weight:700;color:#4caf50;text-decoration:none;border:1px solid #4caf50;border-radius:6px;padding:5px 12px}
   .header-verify:hover{background:#0f1a0f}
+  .header-post{font-size:12px;font-weight:700;color:#5c5cff;text-decoration:none;border:1px solid #5c5cff;border-radius:6px;padding:5px 12px}
+  .header-post:hover{background:#1a1a3a}
   .network-toggle{display:flex;gap:0;margin-left:auto;border:1px solid #2a2a3e;border-radius:6px;overflow:hidden}
   .net-btn{background:#12121e;color:#555;font-size:12px;font-weight:600;padding:5px 14px;cursor:pointer;border:none;transition:all 0.15s}
   .net-btn.active{background:#1e1e3a;color:#8888cc}
@@ -74,7 +77,10 @@
 <body>
 <header>
   <h1>Midnight Loadboard</h1>
-  <a href="get-verified.html" class="header-verify">✓ Get Verified</a>
+  <div class="header-nav">
+    <a href="post-a-load.html" class="header-post">Post a Load</a>
+    <a href="get-verified.html" class="header-verify">✓ Get Verified</a>
+  </div>
   <div class="network-toggle">
     <button class="net-btn" id="btn-preprod" onclick="setNetwork('preprod')">Preprod</button>
     <button class="net-btn active" id="btn-mainnet" onclick="setNetwork('mainnet')">Mainnet</button>
