@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Verified Carriers — Midnight Loadboard</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0a0a12;color:#e0e0e0;font-family:Helvetica,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+  header{width:100%;background:#12121e;border-bottom:1px solid #2a2a3e;padding:16px 32px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  header h1{font-size:20px;font-weight:700;color:#fff;letter-spacing:0.5px}
+  header a{color:#e0e0e0;text-decoration:none}
+  .header-nav{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .nav-btn{font-size:12px;font-weight:700;text-decoration:none;border-radius:6px;padding:5px 12px}
+  .nav-blue{color:#5c5cff;border:1px solid #5c5cff}
+  .nav-blue:hover{background:#1a1a3a}
+  .nav-green{color:#4caf50;border:1px solid #4caf50}
+  .nav-green:hover{background:#0f1a0f}
+
+  .hero{width:100%;max-width:900px;padding:48px 24px 24px;text-align:center}
+  .hero h2{font-size:28px;font-weight:700;color:#fff;margin-bottom:10px}
+  .hero p{color:#888;font-size:15px;line-height:1.7;max-width:560px;margin:0 auto}
+  .badge{display:inline-block;background:#1a1a2a;border:1px solid #5c5cff;border-radius:20px;padding:6px 18px;font-size:12px;font-weight:700;color:#5c5cff;margin-bottom:20px;letter-spacing:0.5px}
+
+  .stats{width:100%;max-width:900px;padding:16px 24px 32px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+  .stat{background:#12121e;border:1px solid #2a2a3e;border-radius:10px;padding:16px 28px;text-align:center}
+  .stat-num{font-size:28px;font-weight:700;color:#5c5cff}
+  .stat-label{font-size:12px;color:#888;margin-top:4px}
+
+  .filters{width:100%;max-width:900px;padding:0 24px 20px;display:flex;gap:10px;flex-wrap:wrap}
+  .filter-btn{background:#12121e;border:1px solid #2a2a3e;border-radius:6px;color:#888;font-size:12px;font-weight:600;padding:6px 14px;cursor:pointer;transition:all 0.15s}
+  .filter-btn.active{background:#1a1a3a;border-color:#5c5cff;color:#5c5cff}
+  .filter-btn:hover{border-color:#5c5cff;color:#5c5cff}
+
+  .registry{width:100%;max-width:900px;padding:0 24px 60px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+
+  .carrier-card{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:20px}
+  .carrier-card.verified{border-color:#1d3a1d}
+  .carrier-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+  .carrier-name{font-size:15px;font-weight:700;color:#fff}
+  .carrier-location{font-size:12px;color:#888;margin-top:2px}
+  .tct-badge{background:#0f1a0f;border:1px solid #1d3a1d;border-radius:4px;padding:3px 8px;font-size:10px;font-weight:700;color:#4caf50;white-space:nowrap}
+  .carrier-details{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+  .detail-row{display:flex;gap:8px;align-items:center}
+  .detail-label{font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:0.5px;min-width:70px}
+  .detail-val{font-size:12px;color:#ccc}
+  .carrier-lanes{margin-top:8px}
+  .lane-tag{display:inline-block;background:#1a1a2e;border:1px solid #2a2a4e;border-radius:4px;padding:3px 8px;font-size:11px;color:#8888cc;margin:2px}
+  .carrier-footer{border-top:1px solid #1a1a2e;padding-top:12px;margin-top:4px;font-size:11px;color:#555}
+
+  .coming-soon{width:100%;max-width:900px;padding:0 24px 40px;text-align:center}
+  .cta-card{background:#12121e;border:1px solid #5c5cff;border-radius:14px;padding:32px;display:flex;flex-direction:column;align-items:center;gap:12px}
+  .cta-card h3{font-size:18px;font-weight:700;color:#fff}
+  .cta-card p{font-size:14px;color:#888;max-width:440px;line-height:1.6;text-align:center}
+  .cta-btn{display:inline-block;background:#5c5cff;color:#fff;font-size:14px;font-weight:700;padding:12px 28px;border-radius:8px;text-decoration:none;margin-top:4px}
+  .cta-btn:hover{background:#7070ff}
+
+  @media(max-width:600px){
+    header{padding:12px 16px}
+    .hero{padding:32px 16px 20px}
+    .hero h2{font-size:22px}
+    .stats{padding:12px 16px 24px}
+    .filters{padding:0 16px 16px}
+    .registry{padding:0 16px 40px;grid-template-columns:1fr}
+    .coming-soon{padding:0 16px 32px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="index.html"><h1>Midnight Loadboard</h1></a>
+  <div class="header-nav">
+    <a href="post-a-load.html" class="nav-btn nav-blue">Post a Load</a>
+    <a href="get-verified.html" class="nav-btn nav-green">✓ Get Verified</a>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="badge">TCT Verified Network</div>
+  <h2>Verified Carrier Registry</h2>
+  <p>Every carrier listed here holds a Trucker Credential Token (TCT) on the Cardano blockchain — confirming their CDL, insurance, and FMCSA authority. Verified before they ever touch your freight.</p>
+</div>
+
+<div class="stats">
+  <div class="stat">
+    <div class="stat-num" id="carrier-count">1</div>
+    <div class="stat-label">Verified Carriers</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">4</div>
+    <div class="stat-label">Equipment Types</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">3</div>
+    <div class="stat-label">States Covered</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">7</div>
+    <div class="stat-label">Days to Payment</div>
+  </div>
+</div>
+
+<div class="filters">
+  <button class="filter-btn active" onclick="filterCarriers('all',this)">All Equipment</button>
+  <button class="filter-btn" onclick="filterCarriers('Dry Van',this)">Dry Van</button>
+  <button class="filter-btn" onclick="filterCarriers('Flatbed',this)">Flatbed</button>
+  <button class="filter-btn" onclick="filterCarriers('Reefer',this)">Reefer</button>
+  <button class="filter-btn" onclick="filterCarriers('Tanker',this)">Tanker</button>
+</div>
+
+<div class="registry" id="registry">
+  <!-- Carrier cards rendered by JS -->
+</div>
+
+<div class="coming-soon">
+  <div class="cta-card">
+    <h3>Are You a Verified Carrier?</h3>
+    <p>Join the Midnight Loadboard network. Submit your documents, set up your wallet, and receive your Trucker Credential Token. Free to join — no subscriptions, no fees.</p>
+    <a href="get-verified.html" class="cta-btn">Get Your TCT Credential</a>
+  </div>
+</div>
+
+<script>
+const carriers = [
+  {
+    name: "Rob Ariano",
+    location: "Durango, CO",
+    cdl: "Class A",
+    equipment: ["Dry Van", "Flatbed"],
+    lanes: ["Colorado", "New Mexico", "Southwest"],
+    experience: "12 Years",
+    tct: true,
+    policy: "31dff13b553a6214cbcc1aa93884fd4351700b6b4da3bd63894cbf5c",
+    note: "Founder — CDL Class A · Navy Veteran"
+  }
+];
+
+function renderCarriers(list) {
+  const registry = document.getElementById('registry');
+  registry.innerHTML = list.map(c => `
+    <div class="carrier-card ${c.tct ? 'verified' : ''}">
+      <div class="carrier-top">
+        <div>
+          <div class="carrier-name">${c.name}</div>
+          <div class="carrier-location">${c.location}</div>
+        </div>
+        ${c.tct ? '<div class="tct-badge">✓ TCT Verified</div>' : ''}
+      </div>
+      <div class="carrier-details">
+        <div class="detail-row">
+          <span class="detail-label">CDL</span>
+          <span class="detail-val">${c.cdl}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Equipment</span>
+          <span class="detail-val">${c.equipment.join(', ')}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Experience</span>
+          <span class="detail-val">${c.experience}</span>
+        </div>
+      </div>
+      <div class="carrier-lanes">
+        ${c.lanes.map(l => `<span class="lane-tag">${l}</span>`).join('')}
+      </div>
+      <div class="carrier-footer" style="margin-top:12px">
+        ${c.note}
+        ${c.tct ? `<br/><span style="color:#4caf50;font-size:10px">Policy: ${c.policy.slice(0,16)}…</span>` : ''}
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('carrier-count').textContent = list.length;
+}
+
+function filterCarriers(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if(type === 'all') {
+    renderCarriers(carriers);
+  } else {
+    renderCarriers(carriers.filter(c => c.equipment.includes(type)));
+  }
+}
+
+renderCarriers(carriers);
+</script>
+</body>
+</html>
