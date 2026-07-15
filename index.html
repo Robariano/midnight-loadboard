@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -91,6 +92,7 @@
     .hero h2{font-size:26px}
     .hero p{font-size:14px}
     .feature-strip{grid-template-columns:1fr;padding:0 16px 32px}
+    .feature-strip[style]{grid-template-columns:1fr!important}
   }
 
   /* Waitlist */
@@ -127,21 +129,26 @@
 
 <!-- HERO -->
 <div class="hero">
-  <div class="hero-badge">Blockchain-Verified Freight Network</div>
-  <h2>Freight That Moves<br/>On Verified Carriers</h2>
-  <p>Midnight Loadboard connects shippers with credentialed truckers — every carrier holds a Trucker Credential Token (TCT) on the Cardano blockchain confirming their CDL, insurance, and FMCSA authority.</p>
+  <div class="hero-badge">Never Lose a BOL Again</div>
+  <h2>Stop Losing Paperwork.<br/>Start Getting Paid.</h2>
+  <p>Every BOL, delivery receipt, and inspection report — permanently stored, tamper-proof, and yours forever. Built into a full freight network where every carrier holds a verified Trucker Credential Token (TCT) on the Cardano blockchain.</p>
   <div class="hero-actions">
-    <a href="post-a-load.html" class="hero-btn-primary">Post a Load</a>
+    <a href="document-vault.html" class="hero-btn-primary">See Document Vault</a>
     <a href="get-verified.html" class="hero-btn-secondary">✓ Get Verified as a Carrier</a>
   </div>
 </div>
 
 <!-- FEATURE CARDS -->
-<div class="feature-strip">
+<div class="feature-strip" style="grid-template-columns:repeat(4,1fr)">
+  <div class="feat-card">
+    <h3>🔒 Document Vault</h3>
+    <p>Never lose a BOL or receipt again. Permanently store your documents, tamper-proof, in your own wallet.</p>
+    <a href="document-vault.html" class="feat-link feat-link-blue">See How It Works →</a>
+  </div>
   <div class="feat-card">
     <h3>📋 Post a Load</h3>
     <p>Submit your freight details and get matched with a verified carrier. Rate confirmation sent before anything moves. Net 7 payment terms.</p>
-    <a href="post-a-load.html" class="feat-link feat-link-blue">Post a Load →</a>
+    <a href="post-a-load.html" class="feat-link feat-link-gray">Post a Load →</a>
   </div>
   <div class="feat-card">
     <h3>✓ Verified Carrier Network</h3>
