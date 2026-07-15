@@ -59,6 +59,8 @@
   }
   #btn-demo{background:transparent;color:#5c5cff;border:1px solid #5c5cff;border-radius:8px;font-size:15px;font-weight:600;padding:12px 28px;cursor:pointer;margin-top:12px}
   #btn-demo:hover{background:#1a1a3a}
+  #btn-gamechanger{background:transparent;color:#4caf50;border:1px solid #4caf50;border-radius:8px;font-size:14px;font-weight:600;padding:10px 24px;cursor:pointer;margin-top:12px;display:block;margin-left:auto;margin-right:auto}
+  #btn-gamechanger:hover{background:#0f1a0f}
   .demo-banner{background:#1a1a2a;border:1px solid #3a3a6a;border-radius:8px;padding:10px 16px;font-size:12px;color:#8888cc;margin-bottom:20px;text-align:center}
 
   /* Hero */
@@ -104,6 +106,7 @@
   .divider{width:100%;max-width:480px;border:none;border-top:1px solid #1a1a2e;margin:0}
   @media(max-width:600px){#waitlist-section{padding:32px 16px 24px}}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@gamechanger-finance/gc/dist/browser.min.js"></script>
 </head>
 <body>
 <header>
@@ -158,6 +161,8 @@
   <p>Connect your Cardano wallet to access the loadboard. TCT holders are routed to the Trucker Dashboard automatically.</p>
   <button id="btn-connect" onclick="connectWallet()">Connect Wallet</button>
   <div id="status"></div>
+  <button id="btn-gamechanger" onclick="connectGameChanger()">Connect with GameChanger Wallet</button>
+  <div id="gc-note" style="font-size:11px;color:#555;margin-top:8px;max-width:400px;margin-left:auto;margin-right:auto;">GameChanger connections currently verify your address only — automatic TCT detection for GameChanger is coming soon.</div>
 <button id="btn-demo" onclick="showDemo()">Preview Demo (No Wallet)</button>
 </div>
 
@@ -318,6 +323,66 @@ function showDemo(){
   document.getElementById('cred-info').innerHTML='<div class="demo-banner">DEMO MODE — Connect a real wallet to verify your TCT</div>';
   document.getElementById('wallet-info').textContent='Demo Mode - mainnet';
 }
+
+// ---- GameChanger Wallet (GCScript) integration ----
+async function connectGameChanger(){
+  const btn = document.getElementById('btn-gamechanger');
+  btn.disabled = true;
+  btn.textContent = 'Redirecting to GameChanger…';
+  try {
+    const { gc } = window;
+    if (!gc) { setStatus('GameChanger library failed to load.', '#cf6679'); btn.disabled=false; btn.textContent='Connect with GameChanger Wallet'; return; }
+    const gcscript = {
+      type: 'script',
+      title: 'Connect to Midnight Loadboard',
+      description: 'Share your wallet address to connect to Midnight Loadboard',
+      exportAs: 'connect',
+      run: {
+        address: { type: 'getCurrentAddress' },
+        stakePubKey: { type: 'getStakingPublicKey' }
+      }
+    };
+    const url = await gc.encode.url({
+      input: JSON.stringify(gcscript),
+      apiVersion: '2',
+      network: currentNetwork === 'preprod' ? 'preprod' : 'mainnet',
+      encoding: 'gzip'
+    });
+    window.location.href = url;
+  } catch(e) {
+    setStatus('GameChanger connect failed: ' + e.message, '#cf6679');
+    btn.disabled = false;
+    btn.textContent = 'Connect with GameChanger Wallet';
+  }
+}
+
+// On page load, check if we're returning from a GameChanger redirect
+(async function checkGameChangerReturn(){
+  const params = new URLSearchParams(window.location.search);
+  const resultRaw = params.get('result');
+  if (!resultRaw) return;
+  try {
+    const { gc } = window;
+    if (!gc) return;
+    const resultObj = await gc.encodings.msg.decoder(resultRaw);
+    const data = resultObj && resultObj.exports && resultObj.exports.connect;
+    if (data && data.address) {
+      const addrDisplay = data.address.substring(0,12) + '…' + data.address.substring(data.address.length-8);
+      // NOTE: GameChanger connections cannot yet auto-verify TCT holding via the
+      // documented API (getCurrentAddress / getStakingPublicKey only). Until an
+      // asset/balance-check intent is confirmed with GameChanger, these users
+      // land on the Broker/Shipper dashboard by default and can be manually
+      // upgraded once TCT is confirmed another way.
+      showDashboard(false, addrDisplay, 'GameChanger', POLICIES[currentNetwork]);
+      document.getElementById('cred-info').innerHTML =
+        '<div class="no-cred">⚠ Connected via GameChanger — TCT auto-verification for this wallet is not yet available. Contact us to confirm your credential manually.</div>';
+    }
+    // Clean the URL so refreshing doesn't re-process the result
+    window.history.replaceState({}, document.title, window.location.pathname);
+  } catch(e) {
+    console.error('Failed to decode GameChanger result', e);
+  }
+})();
 </script>
 </body>
 </html>
