@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -88,16 +89,8 @@
 
 <div class="stats">
   <div class="stat">
-    <div class="stat-num" id="carrier-count">1</div>
+    <div class="stat-num" id="carrier-count">0</div>
     <div class="stat-label">Verified Carriers</div>
-  </div>
-  <div class="stat">
-    <div class="stat-num">4</div>
-    <div class="stat-label">Equipment Types</div>
-  </div>
-  <div class="stat">
-    <div class="stat-num">3</div>
-    <div class="stat-label">States Covered</div>
   </div>
   <div class="stat">
     <div class="stat-num">7</div>
@@ -126,19 +119,18 @@
 </div>
 
 <script>
-const carriers = [
-  {
-    name: "Rob Ariano",
-    location: "Durango, CO",
-    cdl: "Class A",
-    equipment: ["Dry Van", "Flatbed"],
-    lanes: ["Colorado", "New Mexico", "Southwest"],
-    experience: "12 Years",
-    tct: true,
-    policy: "31dff13b553a6214cbcc1aa93884fd4351700b6b4da3bd63894cbf5c",
-    note: "Founder — 12 Years at A&L Coors (Beer Distribution) · CDL All Endorsements · Navy Veteran"
-  }
-];
+const carriers = [];
+
+function renderEmptyState() {
+  const registry = document.getElementById('registry');
+  registry.innerHTML = `
+    <div style="grid-column:1/-1;text-align:center;padding:40px 20px;color:#888;">
+      <p style="font-size:15px;margin-bottom:8px;color:#ccc;">No verified carriers yet — be the first.</p>
+      <p style="font-size:13px;">This network is brand new. <a href="get-verified.html" style="color:#5c5cff;font-weight:600;">Get your TCT credential</a> and be carrier #1.</p>
+    </div>
+  `;
+  document.getElementById('carrier-count').textContent = '0';
+}
 
 function renderCarriers(list) {
   const registry = document.getElementById('registry');
@@ -180,14 +172,15 @@ function renderCarriers(list) {
 function filterCarriers(type, btn) {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  if(type === 'all') {
-    renderCarriers(carriers);
+  const filtered = type === 'all' ? carriers : carriers.filter(c => c.equipment.includes(type));
+  if(filtered.length === 0) {
+    renderEmptyState();
   } else {
-    renderCarriers(carriers.filter(c => c.equipment.includes(type)));
+    renderCarriers(filtered);
   }
 }
 
-renderCarriers(carriers);
+renderEmptyState();
 </script>
 </body>
 </html>
