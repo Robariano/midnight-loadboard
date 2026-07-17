@@ -2,6 +2,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -65,6 +66,8 @@
   #btn-demo:hover{background:#1a1a3a}
   #btn-gamechanger{background:transparent;color:#4caf50;border:1px solid #4caf50;border-radius:8px;font-size:14px;font-weight:600;padding:10px 24px;cursor:pointer;margin-top:12px;display:block;margin-left:auto;margin-right:auto}
   #btn-gamechanger:hover{background:#0f1a0f}
+  #btn-qrconnect{background:transparent;color:#8888cc;border:1px solid #3a3a6a;border-radius:8px;font-size:14px;font-weight:600;padding:10px 24px;cursor:pointer;margin-top:12px;display:block;margin-left:auto;margin-right:auto}
+  #btn-qrconnect:hover{background:#1a1a3a}
   .demo-banner{background:#1a1a2a;border:1px solid #3a3a6a;border-radius:8px;padding:10px 16px;font-size:12px;color:#8888cc;margin-bottom:20px;text-align:center}
 
   /* Hero */
@@ -112,6 +115,7 @@
   @media(max-width:600px){#waitlist-section{padding:32px 16px 24px}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@gamechanger-finance/gc/dist/browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fabianbormann/cardano-peer-connect/dist/index.js"></script>
 </head>
 <body>
 <header>
@@ -176,6 +180,16 @@
   <div id="status"></div>
   <button id="btn-gamechanger" onclick="connectGameChanger()">Connect with GameChanger Wallet</button>
   <div id="gc-note" style="font-size:11px;color:#555;margin-top:8px;max-width:400px;margin-left:auto;margin-right:auto;">GameChanger connections currently verify your address only — automatic TCT detection for GameChanger is coming soon.</div>
+  <button id="btn-qrconnect" onclick="openQRConnect()">Connect via QR Code (Mobile Wallet)</button>
+  <div id="qr-note" style="font-size:11px;color:#555;margin-top:8px;max-width:400px;margin-left:auto;margin-right:auto;">Experimental — scan with a CIP-45 compatible mobile wallet. Not all wallets support this yet.</div>
+  <div id="qr-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;">
+    <div style="background:#12121e;border:1px solid #2a2a3e;border-radius:14px;padding:32px;max-width:340px;text-align:center;">
+      <h3 style="color:#fff;font-size:16px;margin-bottom:12px;">Scan With Your Mobile Wallet</h3>
+      <div id="qr-code-container" style="background:#fff;border-radius:8px;padding:12px;display:inline-block;margin-bottom:16px;"></div>
+      <div id="qr-status" style="font-size:12px;color:#888;margin-bottom:16px;">Waiting for wallet to connect…</div>
+      <button onclick="closeQRConnect()" style="background:transparent;border:1px solid #2a2a3e;color:#888;padding:8px 20px;border-radius:6px;font-size:13px;">Cancel</button>
+    </div>
+  </div>
 <button id="btn-demo" onclick="showDemo()">Preview Demo (No Wallet)</button>
 </div>
 
@@ -335,6 +349,87 @@ function showDemo(){
   showDashboard(true,'demo...wallet','demo','31dff13b553a6214cbcc1aa93884fd4351700b6b4da3bd63894cbf5c');
   document.getElementById('cred-info').innerHTML='<div class="demo-banner">DEMO MODE — Connect a real wallet to verify your TCT</div>';
   document.getElementById('wallet-info').textContent='Demo Mode - mainnet';
+}
+
+// ---- Mobile QR WalletConnect (CIP-45 peer connect) ----
+let dAppConnect = null;
+
+function openQRConnect() {
+  document.getElementById('qr-modal').style.display = 'flex';
+  document.getElementById('qr-status').textContent = 'Generating QR code…';
+
+  if (typeof CardanoPeerConnect === 'undefined') {
+    document.getElementById('qr-status').textContent = 'QR connect library failed to load.';
+    return;
+  }
+
+  try {
+    dAppConnect = new CardanoPeerConnect.DAppPeerConnect({
+      dAppInfo: {
+        name: 'Midnight Loadboard',
+        url: window.location.origin
+      },
+      onConnect: (address, walletInfo) => {
+        document.getElementById('qr-status').textContent =
+          'Connected to ' + (walletInfo?.name || 'wallet') + ' — checking credentials…';
+      },
+      onApiInject: (walletName, address) => {
+        // The wallet's CIP-30 API is now available at window.cardano[walletName].
+        // Reuse the exact same TCT-check flow already used for browser-extension wallets.
+        closeQRConnect();
+        connectInjectedWallet(walletName);
+      },
+      onDisconnect: () => {
+        document.getElementById('qr-status').textContent = 'Wallet disconnected.';
+      }
+    });
+
+    document.getElementById('qr-code-container').innerHTML = '';
+    dAppConnect.generateQRCode(document.getElementById('qr-code-container'));
+    document.getElementById('qr-status').textContent = 'Waiting for wallet to connect…';
+  } catch (e) {
+    document.getElementById('qr-status').textContent = 'Could not start QR connect: ' + e.message;
+  }
+}
+
+function closeQRConnect() {
+  document.getElementById('qr-modal').style.display = 'none';
+}
+
+// Shared logic for any wallet already injected into window.cardano[key] —
+// used by the QR-connect flow above.
+async function connectInjectedWallet(walletKey) {
+  setStatus('Connecting to ' + walletKey + '…');
+  const cardano = window.cardano;
+  if (!cardano || !cardano[walletKey]) {
+    setStatus('Wallet API not found after connect.', '#cf6679');
+    return;
+  }
+  let api;
+  try { api = await cardano[walletKey].enable(); }
+  catch (e) { setStatus('Connection rejected.', '#cf6679'); return; }
+  setStatus('Checking credentials…');
+  const policy = POLICIES[currentNetwork];
+  let addrDisplay = '';
+  try {
+    const addrs = await api.getUsedAddresses();
+    if (addrs && addrs.length > 0) {
+      const hex = addrs[0];
+      addrDisplay = hex.substring(0,12) + '…' + hex.substring(hex.length-8);
+    }
+  } catch(e){}
+  let hasTCT = false;
+  try {
+    const utxos = await api.getUtxos();
+    if (utxos && utxos.length > 0) {
+      for (const u of utxos) {
+        const s = typeof u === 'string' ? u : JSON.stringify(u);
+        if (s.includes(policy)) { hasTCT = true; break; }
+      }
+    }
+    try { const bal = await api.getBalance(); if (bal && bal.includes && bal.includes(policy)) hasTCT = true; } catch(e){}
+  } catch(e) { setStatus('Could not read UTxOs: ' + e.message, '#cf6679'); }
+  showDashboard(hasTCT, addrDisplay, walletKey, policy);
 }
 
 // ---- GameChanger Wallet (GCScript) integration ----
