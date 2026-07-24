@@ -4,6 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Browse Loads — Midnight Loadboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@gamechanger-finance/gc/dist/browser.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#0a0a12;color:#e0e0e0;font-family:Helvetica,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
@@ -23,6 +24,12 @@ header h1{font-size:20px;font-weight:700;color:#fff}
 .stat-box{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:24px;text-align:center;flex:1;min-width:120px}
 .stat-num{font-size:36px;font-weight:800;color:#5c5cff;margin-bottom:4px}
 .stat-label{font-size:13px;color:#888}
+.wallet-bar{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.wallet-status{font-size:13px;color:#888}
+.wallet-status.connected{color:#4caf50}
+.wallet-status.no-tct{color:#cf6679}
+.btn-connect-wallet{background:#5c5cff;color:#fff;font-size:13px;font-weight:700;padding:8px 18px;border:none;border-radius:6px;cursor:pointer}
+.btn-connect-wallet:hover{background:#7070ff}
 .filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
 .filter-btn{background:transparent;color:#888;font-size:13px;font-weight:600;padding:6px 16px;border:1px solid #2a2a3e;border-radius:20px;cursor:pointer}
 .filter-btn.active{background:#1e1e3a;color:#5c5cff;border-color:#5c5cff}
@@ -37,11 +44,24 @@ header h1{font-size:20px;font-weight:700;color:#fff}
 .load-rate{font-size:22px;font-weight:800;color:#4caf50;margin-bottom:4px}
 .load-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
 .load-pay{font-size:13px;color:#5c5cff}
-.btn-claim{background:transparent;color:#5c5cff;font-size:13px;font-weight:700;padding:8px 18px;border:1px solid #5c5cff;border-radius:6px;cursor:pointer;text-decoration:none;display:inline-block}
-.btn-claim:hover{background:#1a1a3a}
+.btn-claim{font-size:13px;font-weight:700;padding:8px 18px;border-radius:6px;cursor:pointer;border:none}
+.btn-claim-active{background:#4caf50;color:#fff}
+.btn-claim-active:hover{background:#5cbf60}
+.btn-claim-locked{background:transparent;color:#5c5cff;border:1px solid #5c5cff;text-decoration:none;display:inline-block}
+.btn-claim-locked:hover{background:#1a1a3a}
+.btn-claim-claimed{background:#1a3a1a;color:#4caf50;border:1px solid #2d6a2d;cursor:default}
 .empty-state{text-align:center;padding:48px 24px;color:#555;font-size:15px;line-height:1.7}
 .empty-state a{color:#4caf50;font-weight:600;text-decoration:none}
-@media(max-width:700px){header{padding:12px 16px}.header-nav{gap:6px}.header-registry,.header-post,.header-verify{font-size:11px;padding:4px 8px}.page-hero{padding:40px 16px 28px}.page-hero h2{font-size:26px}.page-content{padding:0 16px 40px}.loads-grid{grid-template-columns:1fr}.stats-row{gap:8px}}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center}
+.modal.open{display:flex}
+.modal-box{background:#12121e;border:1px solid #2a2a3e;border-radius:14px;padding:32px;max-width:420px;width:90%;text-align:center}
+.modal-box h3{font-size:18px;font-weight:700;color:#fff;margin-bottom:12px}
+.modal-box p{font-size:14px;color:#888;line-height:1.6;margin-bottom:20px}
+.modal-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn-modal-primary{background:#4caf50;color:#fff;font-size:14px;font-weight:700;padding:10px 24px;border:none;border-radius:8px;cursor:pointer}
+.btn-modal-secondary{background:transparent;color:#888;font-size:14px;font-weight:700;padding:10px 24px;border:1px solid #2a2a3e;border-radius:8px;cursor:pointer}
+.claim-success{background:#0f1a0f;border:1px solid #1d3a1d;border-radius:8px;padding:16px;color:#4caf50;font-size:14px;margin-top:12px;display:none}
+@media(max-width:700px){header{padding:12px 16px}.header-nav{gap:6px}.header-registry,.header-post,.header-verify{font-size:11px;padding:4px 8px}.page-hero{padding:40px 16px 28px}.page-hero h2{font-size:26px}.page-content{padding:0 16px 40px}.loads-grid{grid-template-columns:1fr}.stats-row{gap:8px}.wallet-bar{flex-direction:column;align-items:flex-start}}
 </style>
 </head>
 <body>
@@ -67,6 +87,15 @@ header h1{font-size:20px;font-weight:700;color:#fff}
     <div class="stat-box"><div class="stat-num" id="load-count">0</div><div class="stat-label">Open Loads</div></div>
     <div class="stat-box"><div class="stat-num">7</div><div class="stat-label">Days to Payment</div></div>
   </div>
+
+  <div class="wallet-bar">
+    <div>
+      <div class="wallet-status" id="wallet-status">Connect your wallet to claim loads</div>
+      <div style="font-size:12px;color:#555;margin-top:2px" id="wallet-addr"></div>
+    </div>
+    <button class="btn-connect-wallet" id="btn-connect" onclick="connectWallet()">Connect Wallet</button>
+  </div>
+
   <div class="filter-bar">
     <button class="filter-btn active" onclick="filterLoads('all',this)">All Equipment</button>
     <button class="filter-btn" onclick="filterLoads('Dry Van',this)">Dry Van</button>
@@ -76,15 +105,33 @@ header h1{font-size:20px;font-weight:700;color:#fff}
   </div>
   <div class="loads-grid" id="loads-grid"></div>
 </div>
+
+<!-- Claim Modal -->
+<div class="modal" id="claim-modal">
+  <div class="modal-box">
+    <h3 id="modal-title">Claim This Load</h3>
+    <p id="modal-body"></p>
+    <div class="modal-actions" id="modal-actions"></div>
+    <div class="claim-success" id="claim-success">✓ Load claimed! We'll contact you within a few hours to confirm pickup details.</div>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL = 'https://zfpznsxrwjhcmhcoseue.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_eGmZP2GZXxt6nnic_xfeKQ_OwjuTl0i';
+const SUPABASE_KEY = 'sb_publishable_eGmZP2GZXxt6nnic_xfeKQ_OwjuTl0i';
+const TCT_POLICY = '31dff13b553a6214cbcc1aa93884fd4351700b6b4da3bd63894cbf5c';
+const WALLET_PRIORITY = ['eternl','lace','nami','vespr','typhon','yoroi'];
+
 let allLoads = [];
+let walletConnected = false;
+let hasTCT = false;
+let walletAddress = '';
+let currentLoadId = null;
 
 async function fetchLoads() {
   try {
     const resp = await fetch(SUPABASE_URL + '/rest/v1/loads?status=eq.open&order=created_at.desc', {
-      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY }
+      headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY}
     });
     allLoads = await resp.json();
     document.getElementById('load-count').textContent = allLoads.length;
@@ -102,25 +149,34 @@ function renderLoads(loads) {
     return;
   }
   grid.style.display = 'grid';
-  grid.innerHTML = loads.map(l => `
-    <div class="load-card">
-      <div class="load-route">${l.pickup} → ${l.delivery}</div>
-      <div class="load-tags">
-        <span class="tag">${l.equipment}</span>
-        ${l.commodity ? '<span class="tag">'+l.commodity+'</span>' : ''}
-      </div>
-      <div class="load-details">
-        ${l.weight ? '<span class="load-label">WEIGHT</span><span class="load-val">'+l.weight+'</span>' : ''}
-        <span class="load-label">PICKUP</span><span class="load-val">${l.pickup_date}</span>
-        ${l.notes ? '<span class="load-label">NOTES</span><span class="load-val">'+l.notes+'</span>' : ''}
-      </div>
-      <div class="load-rate">${l.rate}</div>
-      <div class="load-footer">
-        <span class="load-pay">${l.payment || ''}</span>
-        <a href="get-verified.html" class="btn-claim">Connect to Claim</a>
-      </div>
-    </div>
-  `).join('');
+  grid.innerHTML = loads.map(l => {
+    let claimBtn = '';
+    if (!walletConnected) {
+      claimBtn = '<button class="btn-claim btn-claim-locked" onclick="connectWallet()">Connect to Claim</button>';
+    } else if (!hasTCT) {
+      claimBtn = '<a href="get-verified.html" class="btn-claim btn-claim-locked">Get Verified to Claim</a>';
+    } else {
+      claimBtn = '<button class="btn-claim btn-claim-active" onclick="openClaimModal(\''+l.id+'\',\''+l.pickup+' → '+l.delivery+'\')">Claim This Load</button>';
+    }
+    return `
+      <div class="load-card">
+        <div class="load-route">${l.pickup} → ${l.delivery}</div>
+        <div class="load-tags">
+          <span class="tag">${l.equipment}</span>
+          ${l.commodity ? '<span class="tag">'+l.commodity+'</span>' : ''}
+        </div>
+        <div class="load-details">
+          ${l.weight ? '<span class="load-label">WEIGHT</span><span class="load-val">'+l.weight+'</span>' : ''}
+          <span class="load-label">PICKUP</span><span class="load-val">${l.pickup_date}</span>
+          ${l.notes ? '<span class="load-label">NOTES</span><span class="load-val">'+l.notes+'</span>' : ''}
+        </div>
+        <div class="load-rate">${l.rate}</div>
+        <div class="load-footer">
+          <span class="load-pay">${l.payment || ''}</span>
+          ${claimBtn}
+        </div>
+      </div>`;
+  }).join('');
 }
 
 function filterLoads(type, btn) {
@@ -128,6 +184,95 @@ function filterLoads(type, btn) {
   btn.classList.add('active');
   const filtered = type === 'all' ? allLoads : allLoads.filter(l => l.equipment === type);
   renderLoads(filtered);
+}
+
+async function connectWallet() {
+  const cardano = window.cardano;
+  if (!cardano) {
+    setWalletStatus('No Cardano wallet found. Install Eternl or Lace.', 'no-tct');
+    return;
+  }
+  let walletKey = null;
+  for (const name of WALLET_PRIORITY) {
+    if (cardano[name] && typeof cardano[name].enable === 'function') { walletKey = name; break; }
+  }
+  if (!walletKey) { setWalletStatus('No supported wallet found.', 'no-tct'); return; }
+  setWalletStatus('Connecting to ' + walletKey + '...', '');
+  let api;
+  try { api = await cardano[walletKey].enable(); } catch(e) { setWalletStatus('Connection rejected.', 'no-tct'); return; }
+  try {
+    const addrs = await api.getUsedAddresses();
+    if (addrs && addrs.length > 0) {
+      walletAddress = addrs[0];
+      document.getElementById('wallet-addr').textContent = walletKey + ' · ' + walletAddress.substring(0,12) + '...' + walletAddress.substring(walletAddress.length-6);
+    }
+  } catch(e) {}
+  try {
+    const utxos = await api.getUtxos();
+    if (utxos) {
+      for (const u of utxos) {
+        const s = typeof u === 'string' ? u : JSON.stringify(u);
+        if (s.includes(TCT_POLICY)) { hasTCT = true; break; }
+      }
+    }
+  } catch(e) {}
+  walletConnected = true;
+  if (hasTCT) {
+    setWalletStatus('✓ TCT Verified — you can claim loads', 'connected');
+    document.getElementById('btn-connect').textContent = '✓ Connected';
+    document.getElementById('btn-connect').style.background = '#4caf50';
+  } else {
+    setWalletStatus('No TCT found — get verified to claim loads', 'no-tct');
+    document.getElementById('btn-connect').textContent = 'Connected (No TCT)';
+    document.getElementById('btn-connect').style.background = '#333';
+  }
+  renderLoads(allLoads);
+}
+
+function setWalletStatus(msg, cls) {
+  const el = document.getElementById('wallet-status');
+  el.textContent = msg;
+  el.className = 'wallet-status ' + cls;
+}
+
+function openClaimModal(loadId, route) {
+  currentLoadId = loadId;
+  document.getElementById('modal-title').textContent = 'Claim This Load';
+  document.getElementById('modal-body').textContent = route + ' — confirm you want to claim this load. We\'ll contact you within a few hours to confirm pickup details and finalize the rate confirmation.';
+  document.getElementById('modal-actions').innerHTML = `
+    <button class="btn-modal-primary" onclick="confirmClaim()">Yes, Claim It</button>
+    <button class="btn-modal-secondary" onclick="closeModal()">Cancel</button>
+  `;
+  document.getElementById('claim-success').style.display = 'none';
+  document.getElementById('claim-modal').classList.add('open');
+}
+
+async function confirmClaim() {
+  document.getElementById('modal-actions').innerHTML = '<div style="color:#888;font-size:14px">Submitting...</div>';
+  try {
+    const load = allLoads.find(l => l.id === currentLoadId);
+    await fetch('https://formspree.io/f/xjgqnbkj', {
+      method: 'POST',
+      body: JSON.stringify({
+        _subject: 'Load Claimed — ' + (load ? load.pickup + ' → ' + load.delivery : currentLoadId),
+        load_id: currentLoadId,
+        route: load ? load.pickup + ' → ' + load.delivery : '',
+        rate: load ? load.rate : '',
+        wallet: walletAddress,
+        tct_verified: hasTCT ? 'Yes' : 'No'
+      }),
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'}
+    });
+    document.getElementById('claim-success').style.display = 'block';
+    document.getElementById('modal-actions').innerHTML = '<button class="btn-modal-secondary" onclick="closeModal()">Close</button>';
+  } catch(e) {
+    document.getElementById('modal-actions').innerHTML = '<button class="btn-modal-secondary" onclick="closeModal()">Close</button>';
+  }
+}
+
+function closeModal() {
+  document.getElementById('claim-modal').classList.remove('open');
+  currentLoadId = null;
 }
 
 fetchLoads();
