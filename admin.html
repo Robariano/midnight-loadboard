@@ -60,10 +60,11 @@ label{font-size:12px;color:#555;font-weight:600;text-transform:uppercase;letter-
 <p class="subtitle">Manage loads, verifications, and claims.</p>
 
 <div class="login-box" id="login-box">
-  <h2>Enter Admin Password</h2>
-  <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')login()"/>
+  <h2>Admin Sign In</h2>
+  <input type="email" id="admin-email" placeholder="Email" onkeydown="if(event.key==='Enter')document.getElementById('admin-pw').focus()"/>
+  <input type="password" id="admin-pw" placeholder="Password" onkeydown="if(event.key==='Enter')login()"/>
   <button class="btn btn-blue" onclick="login()">Sign In</button>
-  <div class="msg msg-red" id="pw-error" style="margin-top:8px">Incorrect password.</div>
+  <div class="msg msg-red" id="pw-error" style="margin-top:8px">Incorrect email or password.</div>
 </div>
 
 <div id="admin-panel">
@@ -73,6 +74,7 @@ label{font-size:12px;color:#555;font-weight:600;text-transform:uppercase;letter-
     <button class="tab-btn" onclick="showTab('verifications',this)">✓ Verifications</button>
     <button class="tab-btn" onclick="showTab('requests',this)">📦 Load Requests</button>
     <button class="tab-btn" onclick="showTab('claims',this)">🔔 Claims</button>
+    <button class="btn-red" style="margin-left:auto" onclick="logout()">Sign Out</button>
   </div>
 
   <div id="tab-loads" class="section">
@@ -136,20 +138,47 @@ label{font-size:12px;color:#555;font-weight:600;text-transform:uppercase;letter-
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 const SUPABASE_URL = 'https://zfpznsxrwjhcmhcoseue.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_eGmZP2GZXxt6nnic_xfeKQ_OwjuTl0i';
-const ADMIN_PASSWORD = 'MidnightAdmin2024!';
+// Free FMCSA QCMobile API key — register at https://mobile.fmcsa.dot.gov/QCDevsite/docs/getStarted
+const FMCSA_WEBKEY = 'PASTE_YOUR_FMCSA_WEBKEY_HERE';
 
-function login() {
-  if(document.getElementById('pw-input').value===ADMIN_PASSWORD){
-    document.getElementById('login-box').style.display='none';
-    document.getElementById('admin-panel').style.display='block';
-    loadAll();
-  } else {
-    document.getElementById('pw-error').style.display='block';
+const authClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function login() {
+  const email = document.getElementById('admin-email').value.trim();
+  const password = document.getElementById('admin-pw').value;
+  document.getElementById('pw-error').style.display = 'none';
+  const { error } = await authClient.auth.signInWithPassword({ email, password });
+  if (error) {
+    document.getElementById('pw-error').textContent = error.message || 'Incorrect email or password.';
+    document.getElementById('pw-error').style.display = 'block';
+    return;
   }
+  document.getElementById('login-box').style.display = 'none';
+  document.getElementById('admin-panel').style.display = 'block';
+  loadAll();
 }
+
+async function logout() {
+  await authClient.auth.signOut();
+  document.getElementById('admin-panel').style.display = 'none';
+  document.getElementById('login-box').style.display = 'block';
+  document.getElementById('admin-email').value = '';
+  document.getElementById('admin-pw').value = '';
+}
+
+// If there's already a valid session (page refresh, etc.), skip straight to the panel.
+(async () => {
+  const { data } = await authClient.auth.getSession();
+  if (data && data.session) {
+    document.getElementById('login-box').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'block';
+    loadAll();
+  }
+})();
 
 function showTab(name,btn){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
@@ -206,6 +235,58 @@ async function deleteLoad(id){
   loadLoads();
 }
 
+async function checkFMCSA(dotMc, btn){
+  const resultEl = btn.closest('.row-card').querySelector('.fmcsa-result');
+  if(!FMCSA_WEBKEY || FMCSA_WEBKEY === 'PASTE_YOUR_FMCSA_WEBKEY_HERE'){
+    resultEl.style.color = '#cf6679';
+    resultEl.textContent = 'No FMCSA webKey set — register free at mobile.fmcsa.dot.gov/QCDevsite/docs/getStarted and paste it into admin.html.';
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = 'Checking…';
+  resultEl.style.color = '#888';
+  resultEl.textContent = 'Looking up FMCSA record…';
+  try {
+    // dot_mc field is free text — pull the first run of digits out as a DOT number.
+    // If it looks like an MC/docket number instead, fall back to the docket-number endpoint.
+    const isMC = /mc/i.test(dotMc) && !/dot/i.test(dotMc);
+    const digits = (dotMc.match(/\d+/) || [null])[0];
+    if(!digits){
+      resultEl.style.color = '#cf6679';
+      resultEl.textContent = 'Could not find a number in "' + dotMc + '" to look up.';
+      return;
+    }
+    const url = isMC
+      ? 'https://mobile.fmcsa.dot.gov/qc/services/carriers/docket-number/' + digits + '?webKey=' + FMCSA_WEBKEY
+      : 'https://mobile.fmcsa.dot.gov/qc/services/carriers/' + digits + '?webKey=' + FMCSA_WEBKEY;
+    const resp = await fetch(url);
+    if(!resp.ok){
+      resultEl.style.color = '#cf6679';
+      resultEl.textContent = 'FMCSA lookup failed (HTTP ' + resp.status + '). Number may not exist, or the webKey is invalid.';
+      return;
+    }
+    const data = await resp.json();
+    const carrier = (data.content && (data.content.carrier || (Array.isArray(data.content) && data.content[0] && data.content[0].carrier))) || null;
+    if(!carrier){
+      resultEl.style.color = '#cf6679';
+      resultEl.textContent = 'No FMCSA record found for ' + digits + '.';
+      return;
+    }
+    const authOk = carrier.allowedToOperate === 'Y' || carrier.allowedToOperate === true;
+    resultEl.style.color = authOk ? '#4caf50' : '#cf6679';
+    resultEl.textContent = (authOk ? '✓ ' : '⚠ ') + (carrier.legalName || carrier.dbaName || 'Carrier') +
+      ' · DOT ' + (carrier.dotNumber || digits) +
+      ' · Authority: ' + (authOk ? 'Active' : (carrier.allowedToOperate || 'Not confirmed active')) +
+      (carrier.statusCode ? ' · Status: ' + carrier.statusCode : '');
+  } catch(e) {
+    resultEl.style.color = '#cf6679';
+    resultEl.textContent = 'FMCSA lookup errored — this can happen if the FMCSA API blocks browser requests (no CORS header). If so, this check needs to run from a small server-side proxy instead of directly from the browser.';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Check FMCSA →';
+  }
+}
+
 async function loadVerifications(){
   const resp=await fetch(SUPABASE_URL+'/rest/v1/verifications?order=created_at.desc',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
   const data=await resp.json();
@@ -218,7 +299,10 @@ async function loadVerifications(){
         <span class="badge badge-${v.status||'pending'}">${v.status||'pending'}</span>
       </div>
       <p>${v.email||''} · ${v.phone||''}</p>
-      <p>CDL: <strong style="color:#e0e0e0">${v.cdl_class||'—'}</strong> · DOT/MC: <strong style="color:#e0e0e0">${v.dot_mc||'—'}</strong></p>
+      <p>CDL: <strong style="color:#e0e0e0">${v.cdl_class||'—'}</strong> · DOT/MC: <strong style="color:#e0e0e0">${v.dot_mc||'—'}</strong>
+        ${v.dot_mc?' <button class="btn-sm btn-approve" style="margin-left:6px" onclick="checkFMCSA('+"'"+v.dot_mc.replace(/'/g,"\\'")+"'"+',this)">Check FMCSA →</button>':''}
+      </p>
+      <div class="fmcsa-result" style="font-size:12px;color:#888;margin-top:2px"></div>
       <p>Equipment: ${v.equipment||'—'}</p>
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
         ${v.cdl_link?'<a href="'+v.cdl_link+'" target="_blank">📄 CDL →</a>':''}
