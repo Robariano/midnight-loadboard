@@ -402,7 +402,7 @@ async function loadClaims(){
       ${c.pod_link?'<p><a href="'+c.pod_link+'" target="_blank">📄 Proof of Delivery →</a></p>':''}
       <p style="font-size:12px;color:#555;margin-top:4px">${new Date(c.created_at).toLocaleDateString()}</p>
       <div class="row-footer">
-        <span></span>
+        <a href="rate-confirmation.html?claim_id=${c.id}" target="_blank" style="font-size:12px;color:#5c5cff">📄 Rate Confirmation →</a>
         ${c.delivered_at
           ? '<span style="font-size:12px;color:#4caf50">✓ Delivered ' + new Date(c.delivered_at).toLocaleDateString() + '</span>'
           : '<button class="btn-sm btn-approve" onclick="markDelivered(\''+c.id+'\')">Mark Delivered →</button>'}

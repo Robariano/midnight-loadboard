@@ -54,19 +54,20 @@ label{font-size:12px;color:#555;font-weight:600;text-transform:uppercase;letter-
 <div class="page-hero">
   <div class="page-badge">Verified Carrier Network</div>
   <h2>Post a Load</h2>
-  <p>Submit your load details below. We'll match you with a verified, credentialed carrier and send you a rate confirmation before anything moves.</p>
+  <p>Submit your load details below and it goes live on the board. Verified carriers can see it and claim it directly — you finalize pickup details with whoever claims it.</p>
   <p class="highlight-blue">Every carrier is pre-verified. Payment terms are clear upfront. No surprises.</p>
 </div>
 <div class="page-content">
   <div class="grid-2">
     <div class="feat-card"><h3>✓ Verified Carriers Only</h3><p>Every carrier holds a verified credential confirming their CDL, insurance, and FMCSA authority.</p></div>
-    <div class="feat-card"><h3>✓ Rate Confirmation Upfront</h3><p>You receive a rate confirmation before any carrier touches your freight.</p></div>
+    <div class="feat-card"><h3>✓ Direct With the Carrier</h3><p>Whoever claims your load contacts you directly to confirm rate and pickup details — no middleman handling the deal.</p></div>
     <div class="feat-card"><h3>✓ Real-Time Updates</h3><p>We communicate pickup confirmation and proof of delivery directly to you.</p></div>
     <div class="feat-card"><h3>✓ 7-Day Payment Terms</h3><p>No NET30 surprises. You know exactly what you owe and when.</p></div>
   </div>
   <div class="form-card">
     <h3>Load Details</h3>
     <form id="load-form">
+      <input type="text" name="company_website" id="l-hp" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px;top:-9999px;opacity:0;height:0;width:0" aria-hidden="true"/>
       <div class="form-row">
         <div><label>Pickup City &amp; State</label><input type="text" id="l-pickup" placeholder="e.g. Durango, CO" required/></div>
         <div><label>Delivery City &amp; State</label><input type="text" id="l-delivery" placeholder="e.g. Albuquerque, NM" required/></div>
@@ -101,7 +102,7 @@ label{font-size:12px;color:#555;font-weight:600;text-transform:uppercase;letter-
       <input type="email" id="l-email" placeholder="Email Address" required/>
       <button type="submit" class="btn-submit">Submit Load</button>
     </form>
-    <div id="form-thanks">✓ Load submitted! We'll reach out within a few hours with a matched carrier and rate confirmation.</div>
+    <div id="form-thanks">✓ Load submitted! We'll review it and get it live on the board — verified carriers can then claim it directly.</div>
   </div>
 </div>
 <script>
@@ -110,6 +111,7 @@ const SUPABASE_KEY = 'sb_publishable_eGmZP2GZXxt6nnic_xfeKQ_OwjuTl0i';
 
 document.getElementById('load-form').addEventListener('submit', async function(e){
   e.preventDefault();
+  if(document.getElementById('l-hp').value){ return; } // honeypot — silently drop bot submissions
   const btn = this.querySelector('.btn-submit');
   btn.textContent = 'Submitting…';
   btn.disabled = true;
@@ -135,6 +137,16 @@ document.getElementById('load-form').addEventListener('submit', async function(e
   if(resp.ok){
     this.style.display='none';
     document.getElementById('form-thanks').style.display='block';
+    // Notify admin — Supabase insert succeeded, this is just a heads-up email, ok if it fails.
+    fetch('https://formspree.io/f/xjgqnbkj', {
+      method: 'POST',
+      body: JSON.stringify({
+        _subject: 'New Load Posted — ' + body.pickup + ' → ' + body.delivery,
+        message: 'New load request from ' + body.name + ' (' + body.email + '). Review and publish it from the admin Load Requests tab.',
+        pickup: body.pickup, delivery: body.delivery, rate: body.rate
+      }),
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'}
+    }).catch(()=>{});
   } else {
     btn.textContent='Try Again';
     btn.disabled=false;

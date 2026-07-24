@@ -77,6 +77,7 @@ label{font-size:12px;color:#555;font-weight:600;text-transform:uppercase;letter-
     <h3>Submit Your Documents</h3>
     <p>Paste links to your documents — Google Drive, Dropbox, or any shareable link works fine.</p>
     <form id="verify-form">
+      <input type="text" name="company_website" id="v-hp" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px;top:-9999px;opacity:0;height:0;width:0" aria-hidden="true"/>
       <div class="form-row">
         <div><label>Full Name</label><input type="text" id="v-name" placeholder="Your full legal name" required/></div>
         <div><label>Email</label><input type="email" id="v-email" placeholder="Email address" required/></div>
@@ -113,6 +114,7 @@ const SUPABASE_KEY = 'sb_publishable_eGmZP2GZXxt6nnic_xfeKQ_OwjuTl0i';
 
 document.getElementById('verify-form').addEventListener('submit', async function(e){
   e.preventDefault();
+  if(document.getElementById('v-hp').value){ return; } // honeypot — silently drop bot submissions
   const btn = this.querySelector('.btn-submit');
   btn.textContent = 'Submitting…';
   btn.disabled = true;
@@ -137,6 +139,16 @@ document.getElementById('verify-form').addEventListener('submit', async function
   if(resp.ok){
     this.style.display='none';
     document.getElementById('form-thanks').style.display='block';
+    // Notify admin — Supabase insert succeeded, this is just a heads-up email, ok if it fails.
+    fetch('https://formspree.io/f/xjgqnbkj', {
+      method: 'POST',
+      body: JSON.stringify({
+        _subject: 'New Carrier Verification — ' + body.name,
+        message: 'New verification request from ' + body.name + ' (' + body.email + '), DOT/MC: ' + body.dot_mc + '. Review it from the admin Verifications tab.',
+        name: body.name, email: body.email, dot_mc: body.dot_mc
+      }),
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'}
+    }).catch(()=>{});
   } else {
     btn.textContent='Try Again';
     btn.disabled=false;

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Rate Confirmation — Midnight Loadboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a12;color:#e0e0e0;font-family:Helvetica,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 24px}
+.toolbar{width:100%;max-width:720px;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.toolbar a{color:#888;text-decoration:none;font-size:13px}
+.btn-print{background:#5c5cff;color:#fff;font-size:13px;font-weight:700;padding:10px 20px;border:none;border-radius:8px;cursor:pointer}
+.doc{background:#fff;color:#111;width:100%;max-width:720px;padding:48px;border-radius:8px}
+.doc h1{font-size:22px;margin-bottom:2px}
+.doc .sub{color:#666;font-size:13px;margin-bottom:24px}
+.doc .row{display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:10px 0}
+.doc .label{color:#666;font-size:12px;text-transform:uppercase;letter-spacing:0.5px}
+.doc .val{font-weight:600;text-align:right}
+.doc .section-title{font-size:14px;font-weight:700;margin:24px 0 8px}
+.doc .rate-box{background:#f3f6ff;border:1px solid #5c5cff;border-radius:8px;padding:16px;text-align:center;margin:20px 0}
+.doc .rate-box .amount{font-size:28px;font-weight:800;color:#3a3aff}
+.doc .rate-box .terms{font-size:12px;color:#555;margin-top:4px}
+.doc .disclaimer{font-size:11px;color:#888;margin-top:32px;line-height:1.6;border-top:1px solid #eee;padding-top:16px}
+.doc .notfound{padding:60px;text-align:center;color:#888}
+@media print{
+  body{background:#fff;padding:0}
+  .toolbar{display:none}
+  .doc{box-shadow:none;padding:0;max-width:100%}
+}
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <a href="admin.html">← Back to Admin</a>
+  <button class="btn-print" onclick="window.print()">Print / Save as PDF</button>
+</div>
+<div class="doc" id="doc">
+  <div class="notfound">Loading…</div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://zfpznsxrwjhcmhcoseue.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_eGmZP2GZXxt6nnic_xfeKQ_OwjuTl0i';
+
+function qs(name){
+  return new URLSearchParams(window.location.search).get(name);
+}
+
+async function loadConfirmation(){
+  const claimId = qs('claim_id');
+  const doc = document.getElementById('doc');
+  if(!claimId){
+    doc.innerHTML = '<div class="notfound">No claim specified. Open this page from a claim in the admin Claims tab.</div>';
+    return;
+  }
+  const claimResp = await fetch(SUPABASE_URL+'/rest/v1/claims?id=eq.'+claimId, {
+    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+  });
+  const claims = await claimResp.json();
+  const claim = claims[0];
+  if(!claim){
+    doc.innerHTML = '<div class="notfound">Claim not found.</div>';
+    return;
+  }
+
+  let load = null;
+  if(claim.load_id){
+    const loadResp = await fetch(SUPABASE_URL+'/rest/v1/loads?id=eq.'+claim.load_id, {
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+    });
+    const loads = await loadResp.json();
+    load = loads[0] || null;
+  }
+
+  const today = new Date().toLocaleDateString();
+  const confNum = 'RC-' + claim.id.slice(0,8).toUpperCase();
+
+  doc.innerHTML = `
+    <h1>Rate Confirmation</h1>
+    <div class="sub">Confirmation #${confNum} · Issued ${today} · Midnight Loadboard</div>
+
+    <div class="section-title">Route</div>
+    <div class="row"><span class="label">Route</span><span class="val">${claim.route || (load ? load.pickup+' → '+load.delivery : '—')}</span></div>
+    <div class="row"><span class="label">Pickup Date</span><span class="val">${load?.pickup_date || '—'}</span></div>
+    <div class="row"><span class="label">Equipment</span><span class="val">${load?.equipment || '—'}</span></div>
+    <div class="row"><span class="label">Weight</span><span class="val">${load?.weight || '—'}</span></div>
+    <div class="row"><span class="label">Commodity</span><span class="val">${load?.commodity || '—'}</span></div>
+    ${load?.notes ? '<div class="row"><span class="label">Notes</span><span class="val">'+load.notes+'</span></div>' : ''}
+
+    <div class="section-title">Carrier</div>
+    <div class="row"><span class="label">Name</span><span class="val">${claim.carrier_name || '—'}</span></div>
+    <div class="row"><span class="label">Email</span><span class="val">${claim.carrier_email || '—'}</span></div>
+
+    <div class="rate-box">
+      <div class="amount">${claim.rate || load?.rate || '—'}</div>
+      <div class="terms">${load?.payment || 'Net 7'} — payment handled directly between carrier and shipper</div>
+    </div>
+
+    <div class="disclaimer">
+      This document confirms the rate and load details agreed between the carrier and shipper listed above. Midnight Loadboard is a listing platform that connects shippers and carriers — it is not a party to this transaction, does not process payment, and does not guarantee performance by either party. Both parties are responsible for confirming pickup/delivery details, insurance, and payment terms directly with each other.
+    </div>
+  `;
+}
+
+loadConfirmation();
+</script>
+</body>
+</html>

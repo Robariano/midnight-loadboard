@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Privacy Policy — Midnight Loadboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a12;color:#e0e0e0;font-family:Helvetica,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+header{width:100%;background:#12121e;border-bottom:1px solid #2a2a3e;padding:16px 32px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{font-size:20px;font-weight:700;color:#fff}
+.header-nav{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.header-registry{font-size:12px;font-weight:700;color:#888;text-decoration:none;border:1px solid #2a2a3e;border-radius:6px;padding:5px 12px}
+.header-registry:hover{background:#1a1a2e;color:#e0e0e0}
+.page-hero{width:100%;max-width:760px;padding:64px 24px 40px;text-align:center}
+.page-badge{display:inline-block;background:#1a1a2a;border:1px solid #5c5cff;border-radius:20px;padding:6px 18px;font-size:12px;font-weight:700;color:#5c5cff;margin-bottom:20px}
+.page-hero h2{font-size:36px;font-weight:800;color:#fff;margin-bottom:14px}
+.page-hero p{color:#888;font-size:16px;line-height:1.7;max-width:600px;margin:0 auto}
+.page-content{width:100%;max-width:760px;padding:0 24px 64px}
+.card{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:28px;margin-bottom:20px}
+.card h3{font-size:16px;font-weight:700;color:#fff;margin-bottom:12px}
+.card p, .card li{font-size:14px;color:#888;line-height:1.7;margin-bottom:10px}
+.card ul{padding-left:20px;margin-bottom:10px}
+.card p:last-child{margin-bottom:0}
+.updated{font-size:12px;color:#555;text-align:center;margin-bottom:24px}
+@media(max-width:700px){header{padding:12px 16px}.page-hero{padding:40px 16px 28px}.page-hero h2{font-size:26px}.page-content{padding:0 16px 40px}.card{padding:20px}}
+</style>
+</head>
+<body>
+<header>
+  <h1><a href="index.html" style="color:#fff;text-decoration:none;">Midnight Loadboard</a></h1>
+  <div class="header-nav">
+    <a href="loads.html" class="header-registry">Browse Loads</a>
+    <a href="about-founder.html" class="header-registry">About</a>
+    <a href="carriers.html" class="header-registry">Carriers</a>
+    <a href="post-a-load.html" class="header-registry">Post a Load</a>
+    <a href="get-verified.html" class="header-registry">Get Verified</a>
+  </div>
+</header>
+<div class="page-hero">
+  <div class="page-badge">Legal</div>
+  <h2>Privacy Policy</h2>
+  <p>What we collect, why, and how it's handled.</p>
+</div>
+<div class="page-content">
+  <div class="updated">Last updated: July 2026</div>
+
+  <div class="card">
+    <h3>What We Collect</h3>
+    <p>Depending on which form you use, we collect: your name, email, and phone number; for carriers, your CDL class, DOT/MC number, and links to your CDL, insurance certificate, and FMCSA operating authority documents that you provide; for shippers, load details like pickup/delivery locations, dates, and rates.</p>
+    <p>We do not ask for or store payment information, bank details, or Social Security numbers. We don't collect location data, and we don't use tracking cookies or analytics scripts.</p>
+  </div>
+
+  <div class="card">
+    <h3>How We Use It</h3>
+    <ul>
+      <li>To verify carrier credentials (CDL, insurance, operating authority) before listing them as a verified carrier.</li>
+      <li>To list your load or carrier profile on the board so the other side of the marketplace can see and act on it.</li>
+      <li>To contact you about your submission — approval status, questions, or to facilitate a match.</li>
+    </ul>
+    <p>We do not sell your data, and we do not share it with third parties except as described below.</p>
+  </div>
+
+  <div class="card">
+    <h3>Where It's Stored</h3>
+    <p>Submissions are stored in a Supabase database. Document links you provide (CDL, insurance, authority) point to files you host yourself (Google Drive, Dropbox, etc.) — we don't host or copy those files ourselves, we just store the link.</p>
+    <p>If you use the "Check FMCSA" lookup on a verification, we query the federal FMCSA QCMobile public database using your submitted DOT/MC number to check operating authority status — no additional data is sent to FMCSA beyond that number.</p>
+  </div>
+
+  <div class="card">
+    <h3>Who Can See It</h3>
+    <p>Load requests and carrier verifications are reviewed by the site admin before anything is made public. If a carrier is approved, their name and basic info appear on the public Carriers page. Loads you post appear on the public Browse Loads page once published — this includes pickup/delivery, equipment, and rate, but not your personal contact info, which is shared directly with a carrier once they claim it.</p>
+  </div>
+
+  <div class="card">
+    <h3>Your Choices</h3>
+    <p>You can ask us to delete your submitted information at any time by emailing <a href="mailto:robertariano@gmail.com" style="color:#5c5cff">robertariano@gmail.com</a>. If you're an approved carrier and want to be removed from the public Carriers page, the same applies.</p>
+  </div>
+
+  <div class="card">
+    <h3>Changes</h3>
+    <p>This is a small, early-stage platform and this policy may change as the product grows. We'll update the date above when it does.</p>
+  </div>
+</div>
+</body>
+</html>
