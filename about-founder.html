@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>About the Founder — Midnight Loadboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a12;color:#e0e0e0;font-family:Helvetica,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+header{width:100%;background:#12121e;border-bottom:1px solid #2a2a3e;padding:16px 32px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{font-size:20px;font-weight:700;color:#fff}
+.header-nav{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.header-verify{font-size:12px;font-weight:700;color:#4caf50;text-decoration:none;border:1px solid #4caf50;border-radius:6px;padding:5px 12px}
+.header-post{font-size:12px;font-weight:700;color:#5c5cff;text-decoration:none;border:1px solid #5c5cff;border-radius:6px;padding:5px 12px}
+.header-registry{font-size:12px;font-weight:700;color:#888;text-decoration:none;border:1px solid #2a2a3e;border-radius:6px;padding:5px 12px}
+.header-registry:hover{background:#1a1a2e;color:#e0e0e0}
+.page-hero{width:100%;max-width:760px;padding:64px 24px 40px;text-align:center}
+.page-badge{display:inline-block;background:#1a1a2a;border:1px solid #5c5cff;border-radius:20px;padding:6px 18px;font-size:12px;font-weight:700;color:#5c5cff;margin-bottom:20px}
+.page-hero h2{font-size:36px;font-weight:800;color:#fff;margin-bottom:14px}
+.page-hero p{color:#888;font-size:16px;line-height:1.7;max-width:600px;margin:0 auto}
+.page-content{width:100%;max-width:760px;padding:0 24px 64px}
+.story-card{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:32px}
+.story-section{margin-bottom:28px}
+.story-section:last-child{margin-bottom:0}
+.story-section h3{font-size:17px;font-weight:700;color:#fff;margin-bottom:12px}
+.story-section p{font-size:15px;color:#888;line-height:1.8;margin-bottom:12px}
+.story-section p:last-child{margin-bottom:0}
+@media(max-width:700px){header{padding:12px 16px}.header-nav{gap:6px}.header-registry,.header-post,.header-verify{font-size:11px;padding:4px 8px}.page-hero{padding:40px 16px 28px}.page-hero h2{font-size:26px}.page-content{padding:0 16px 40px}.story-card{padding:20px}}
+</style>
+</head>
+<body>
+<header>
+  <h1><a href="index.html" style="color:#fff;text-decoration:none;">Midnight Loadboard</a></h1>
+  <div class="header-nav">
+    <a href="loads.html" class="header-registry">Browse Loads</a>
+    <a href="document-vault.html" class="header-registry">Document Vault</a>
+    <a href="about-founder.html" class="header-registry" style="color:#e0e0e0;border-color:#5c5cff;">About</a>
+    <a href="carriers.html" class="header-registry">Carriers</a>
+    <a href="revoked-credentials.html" class="header-registry" style="color:#cf6679;border-color:#3a1d1d;">Revoked</a>
+    <a href="post-a-load.html" class="header-post">Post a Load</a>
+    <a href="get-verified.html" class="header-verify">✓ Get Verified</a>
+  </div>
+</header>
+<div class="page-hero">
+  <div class="page-badge">About the Founder</div>
+  <h2>Built From a Real Problem</h2>
+  <p>Beer delivery routes, warehouse work, bad routing tools, and a detour through bodybuilding NFTs — here's how Midnight Loadboard actually came together.</p>
+</div>
+<div class="page-content">
+  <div class="story-card">
+    <div class="story-section">
+      <h3>The Background</h3>
+      <p>My family has run A&L Coors, a beer distribution business based in Durango, Colorado, for years — my grandfather established it in 1933. I was in and out of it for over a decade. I had my own delivery routes early on, went to school part-time, stepped back to part-time, left, and came back more than once. The last several years there, I worked mostly in the warehouse, driving about one day a week.</p>
+      <p>I hold a CDL with all endorsements and I'm a Navy veteran. One of my last assignments in the Navy was truck inspection — unloading civilian flatbeds, blocking and bracing cargo, and helping inspect trucks moving weapons between a weapons station and naval vessels.</p>
+    </div>
+    <div class="story-section">
+      <h3>The Detour That Led Here</h3>
+      <p>I left a good job at Marriott to try driving again — it didn't work out. My last driving job forced us onto Google Maps for routing, and it was genuinely bad for trucks. That frustration sent me down a technical rabbit hole: the Google Maps API, Google's Fleet Engine, even a drone certification class, all while thinking about what a real routing tool for truckers should look like.</p>
+      <p>Somewhere in that process I stumbled into blockchain. My first project was minting bodybuilding NFTs on Cardano — not because I had a plan, but because I was learning how the technology actually worked. That led me to smart contracts, then to the Midnight Network and zero-knowledge proofs, and eventually to the idea that credential verification in freight was a real, solvable problem.</p>
+    </div>
+    <div class="story-section">
+      <h3>Why This Exists</h3>
+      <p>Freight has a trust problem. Brokers don't know who they're actually hiring. Carriers can't prove who they are without jumping through endless hoops. Documents get lost. Payment drags out 30, 60, 90 days. The whole system runs on phone calls and fax machines and people hoping the other side is telling the truth.</p>
+      <p>Midnight Loadboard is built on a simple idea: if every carrier holds a blockchain credential proving their CDL, insurance, and FMCSA authority, and if every document they touch gets stored permanently and tamper-proof, the trust problem mostly solves itself. Shippers know who they're hiring. Carriers get paid in 7 days. Nobody loses paperwork.</p>
+      <p>I built this from scratch — the smart contracts, the frontend, the credentialing system. If you're a carrier or a shipper and you want to be part of something that actually works differently, <a href="get-verified.html" style="color:#4caf50;font-weight:600;">get verified</a> or <a href="post-a-load.html" style="color:#5c5cff;font-weight:600;">post a load</a>.</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

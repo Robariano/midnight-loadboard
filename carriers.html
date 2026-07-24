@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Verified Carriers — Midnight Loadboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a12;color:#e0e0e0;font-family:Helvetica,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+header{width:100%;background:#12121e;border-bottom:1px solid #2a2a3e;padding:16px 32px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{font-size:20px;font-weight:700;color:#fff}
+.header-nav{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.header-verify{font-size:12px;font-weight:700;color:#4caf50;text-decoration:none;border:1px solid #4caf50;border-radius:6px;padding:5px 12px}
+.header-post{font-size:12px;font-weight:700;color:#5c5cff;text-decoration:none;border:1px solid #5c5cff;border-radius:6px;padding:5px 12px}
+.header-registry{font-size:12px;font-weight:700;color:#888;text-decoration:none;border:1px solid #2a2a3e;border-radius:6px;padding:5px 12px}
+.header-registry:hover{background:#1a1a2e;color:#e0e0e0}
+.page-hero{width:100%;max-width:900px;padding:64px 24px 40px;text-align:center}
+.page-badge{display:inline-block;background:#1a1a2a;border:1px solid #5c5cff;border-radius:20px;padding:6px 18px;font-size:12px;font-weight:700;color:#5c5cff;margin-bottom:20px}
+.page-hero h2{font-size:36px;font-weight:800;color:#fff;margin-bottom:14px}
+.page-hero p{color:#888;font-size:16px;line-height:1.7;max-width:600px;margin:0 auto 10px}
+.page-content{width:100%;max-width:900px;padding:0 24px 64px}
+.stats-row{display:flex;gap:16px;margin-bottom:40px;flex-wrap:wrap}
+.stat-box{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:24px;text-align:center;flex:1;min-width:120px}
+.stat-num{font-size:36px;font-weight:800;color:#5c5cff;margin-bottom:4px}
+.stat-label{font-size:13px;color:#888}
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+.filter-btn{background:transparent;color:#888;font-size:13px;font-weight:600;padding:6px 16px;border:1px solid #2a2a3e;border-radius:20px;cursor:pointer}
+.filter-btn.active{background:#1e1e3a;color:#5c5cff;border-color:#5c5cff}
+.empty-state{text-align:center;padding:48px 24px;color:#555;font-size:15px;line-height:1.7}
+.empty-state a{color:#4caf50;font-weight:600;text-decoration:none}
+.highlight-green{color:#4caf50;font-weight:600}
+@media(max-width:700px){header{padding:12px 16px}.header-nav{gap:6px}.header-registry,.header-post,.header-verify{font-size:11px;padding:4px 8px}.page-hero{padding:40px 16px 28px}.page-hero h2{font-size:26px}.page-content{padding:0 16px 40px}.stats-row{gap:8px}}
+</style>
+</head>
+<body>
+<header>
+  <h1><a href="index.html" style="color:#fff;text-decoration:none;">Midnight Loadboard</a></h1>
+  <div class="header-nav">
+    <a href="loads.html" class="header-registry">Browse Loads</a>
+    <a href="document-vault.html" class="header-registry">Document Vault</a>
+    <a href="about-founder.html" class="header-registry">About</a>
+    <a href="carriers.html" class="header-registry" style="color:#e0e0e0;border-color:#5c5cff;">Carriers</a>
+    <a href="revoked-credentials.html" class="header-registry" style="color:#cf6679;border-color:#3a1d1d;">Revoked</a>
+    <a href="post-a-load.html" class="header-post">Post a Load</a>
+    <a href="get-verified.html" class="header-verify">✓ Get Verified</a>
+  </div>
+</header>
+<div class="page-hero">
+  <div class="page-badge">TCT Verified Network</div>
+  <h2>Verified Carrier Registry</h2>
+  <p>Every carrier listed here holds a Trucker Credential Token (TCT) on the Cardano blockchain — confirming their CDL, insurance, and FMCSA authority. Verified before they ever touch your freight.</p>
+  <p class="highlight-green">Carriers can be paid in USDM stablecoin via GameChanger Wallet.</p>
+</div>
+<div class="page-content">
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-num">0</div><div class="stat-label">Verified Carriers</div></div>
+    <div class="stat-box"><div class="stat-num">7</div><div class="stat-label">Days to Payment</div></div>
+  </div>
+  <div class="filter-bar">
+    <button class="filter-btn active">All Equipment</button>
+    <button class="filter-btn">Dry Van</button>
+    <button class="filter-btn">Flatbed</button>
+    <button class="filter-btn">Reefer</button>
+    <button class="filter-btn">Tanker</button>
+  </div>
+  <div class="empty-state">
+    No verified carriers yet — be the first.<br/>
+    This network is brand new. <a href="get-verified.html">Get your TCT credential</a> and be carrier #1.
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Post a Load — Midnight Loadboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a12;color:#e0e0e0;font-family:Helvetica,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+header{width:100%;background:#12121e;border-bottom:1px solid #2a2a3e;padding:16px 32px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{font-size:20px;font-weight:700;color:#fff}
+.header-nav{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.header-verify{font-size:12px;font-weight:700;color:#4caf50;text-decoration:none;border:1px solid #4caf50;border-radius:6px;padding:5px 12px}
+.header-post{font-size:12px;font-weight:700;color:#5c5cff;text-decoration:none;border:1px solid #5c5cff;border-radius:6px;padding:5px 12px}
+.header-registry{font-size:12px;font-weight:700;color:#888;text-decoration:none;border:1px solid #2a2a3e;border-radius:6px;padding:5px 12px}
+.header-registry:hover{background:#1a1a2e;color:#e0e0e0}
+.page-hero{width:100%;max-width:760px;padding:64px 24px 40px;text-align:center}
+.page-badge{display:inline-block;background:#1a1a2a;border:1px solid #5c5cff;border-radius:20px;padding:6px 18px;font-size:12px;font-weight:700;color:#5c5cff;margin-bottom:20px}
+.page-hero h2{font-size:36px;font-weight:800;color:#fff;margin-bottom:14px}
+.page-hero p{color:#888;font-size:16px;line-height:1.7;max-width:600px;margin:0 auto 10px}
+.highlight-blue{color:#5c5cff;font-weight:600}
+.page-content{width:100%;max-width:760px;padding:0 24px 64px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:32px}
+.feat-card{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:20px}
+.feat-card h3{font-size:14px;font-weight:700;color:#fff;margin-bottom:6px}
+.feat-card p{font-size:13px;color:#888;line-height:1.5}
+.form-card{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:32px}
+.form-card h3{font-size:18px;font-weight:700;color:#fff;margin-bottom:20px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+input,select,textarea{background:#0a0a12;border:1px solid #2a2a3e;border-radius:8px;color:#e0e0e0;font-size:14px;padding:11px 14px;width:100%;outline:none;margin-bottom:12px;font-family:inherit}
+input:focus,select:focus,textarea:focus{border-color:#5c5cff}
+select option{background:#0a0a12}
+textarea{min-height:90px;resize:vertical}
+label{font-size:12px;color:#555;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px}
+.btn-submit{background:#5c5cff;color:#fff;font-size:15px;font-weight:700;padding:13px;border-radius:8px;border:none;cursor:pointer;width:100%;margin-top:4px}
+.btn-submit:hover{background:#7070ff}
+#form-thanks{display:none;background:#0f1a0f;border:1px solid #1d3a1d;border-radius:8px;padding:20px;color:#4caf50;font-size:15px;text-align:center;margin-top:16px}
+@media(max-width:700px){header{padding:12px 16px}.header-nav{gap:6px}.header-registry,.header-post,.header-verify{font-size:11px;padding:4px 8px}.page-hero{padding:40px 16px 28px}.page-hero h2{font-size:26px}.page-content{padding:0 16px 40px}.grid-2,.form-row{grid-template-columns:1fr}.form-card{padding:20px}}
+</style>
+</head>
+<body>
+<header>
+  <h1><a href="index.html" style="color:#fff;text-decoration:none;">Midnight Loadboard</a></h1>
+  <div class="header-nav">
+    <a href="loads.html" class="header-registry">Browse Loads</a>
+    <a href="document-vault.html" class="header-registry">Document Vault</a>
+    <a href="about-founder.html" class="header-registry">About</a>
+    <a href="carriers.html" class="header-registry">Carriers</a>
+    <a href="revoked-credentials.html" class="header-registry" style="color:#cf6679;border-color:#3a1d1d;">Revoked</a>
+    <a href="post-a-load.html" class="header-post" style="background:#1a1a3a;">Post a Load</a>
+    <a href="get-verified.html" class="header-verify">✓ Get Verified</a>
+  </div>
+</header>
+<div class="page-hero">
+  <div class="page-badge">Verified Carrier Network</div>
+  <h2>Post a Load</h2>
+  <p>Submit your load details below. We'll match you with a verified, credentialed carrier and send you a rate confirmation before anything moves.</p>
+  <p class="highlight-blue">Every carrier is pre-verified. Payment terms are clear upfront. No surprises.</p>
+</div>
+<div class="page-content">
+  <div class="grid-2">
+    <div class="feat-card"><h3>✓ Verified Carriers Only</h3><p>Every carrier holds a Trucker Credential Token confirming their CDL, insurance, and FMCSA authority.</p></div>
+    <div class="feat-card"><h3>✓ Rate Confirmation Upfront</h3><p>You receive a signed rate confirmation before any carrier touches your freight.</p></div>
+    <div class="feat-card"><h3>✓ Real-Time Updates</h3><p>We communicate pickup confirmation and proof of delivery directly to you.</p></div>
+    <div class="feat-card"><h3>✓ 7-Day Payment Terms</h3><p>Simple, fast payment terms — no NET30 surprises. You know exactly what you owe and when.</p></div>
+    <div class="feat-card"><h3>✓ Stablecoin Payments (USDM)</h3><p>Pay carriers directly in USDM via GameChanger Wallet — settle on delivery confirmation, no bank delays.</p></div>
+  </div>
+  <div class="form-card">
+    <h3>Load Details</h3>
+    <form id="load-form" action="https://formspree.io/f/xjgqnbkj" method="POST">
+      <div class="form-row">
+        <div><label>Pickup City &amp; State</label><input type="text" name="pickup" placeholder="e.g. Durango, CO" required/></div>
+        <div><label>Delivery City &amp; State</label><input type="text" name="delivery" placeholder="e.g. Albuquerque, NM" required/></div>
+      </div>
+      <div class="form-row">
+        <div><label>Pickup Date</label><input type="date" name="pickup_date" required/></div>
+        <div><label>Equipment Type</label>
+          <select name="equipment" required>
+            <option value="" disabled selected>Select equipment</option>
+            <option>Dry Van</option><option>Flatbed</option><option>Reefer</option><option>Tanker</option><option>Step Deck</option><option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div><label>Weight (lbs)</label><input type="text" name="weight" placeholder="e.g. 38,000"/></div>
+        <div><label>Commodity</label><input type="text" name="commodity" placeholder="e.g. Beer / Beverage"/></div>
+      </div>
+      <div class="form-row">
+        <div><label>Your Rate Offer</label><input type="text" name="rate" placeholder="e.g. $1,150"/></div>
+        <div><label>Payment Method</label>
+          <select name="payment">
+            <option value="" disabled selected>Select payment</option>
+            <option>Net 7 (Standard)</option><option>USDM Stablecoin</option>
+          </select>
+        </div>
+      </div>
+      <label>Additional Notes</label>
+      <textarea name="notes" placeholder="Hazmat, special handling, dock hours, etc."></textarea>
+      <label>Your Name</label>
+      <input type="text" name="name" placeholder="Full Name" required/>
+      <label>Your Email</label>
+      <input type="email" name="email" placeholder="Email Address" required/>
+      <input type="hidden" name="_subject" value="New Load Posted — Midnight Loadboard"/>
+      <button type="submit" class="btn-submit">Submit Load</button>
+    </form>
+    <div id="form-thanks">✓ Load submitted! We'll reach out within a few hours with a matched carrier and rate confirmation.</div>
+  </div>
+</div>
+<script>
+document.getElementById('load-form').addEventListener('submit',async function(e){e.preventDefault();const btn=this.querySelector('.btn-submit');btn.textContent='Submitting…';btn.disabled=true;try{const resp=await fetch(this.action,{method:'POST',body:new FormData(this),headers:{Accept:'application/json'}});if(resp.ok){this.style.display='none';document.getElementById('form-thanks').style.display='block';}else{btn.textContent='Try Again';btn.disabled=false;}}catch(e){btn.textContent='Try Again';btn.disabled=false;}});
+</script>
+</body>
+</html>

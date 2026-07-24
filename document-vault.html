@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Document Vault — Midnight Loadboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a12;color:#e0e0e0;font-family:Helvetica,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+header{width:100%;background:#12121e;border-bottom:1px solid #2a2a3e;padding:16px 32px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{font-size:20px;font-weight:700;color:#fff}
+.header-nav{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.header-verify{font-size:12px;font-weight:700;color:#4caf50;text-decoration:none;border:1px solid #4caf50;border-radius:6px;padding:5px 12px}
+.header-post{font-size:12px;font-weight:700;color:#5c5cff;text-decoration:none;border:1px solid #5c5cff;border-radius:6px;padding:5px 12px}
+.header-registry{font-size:12px;font-weight:700;color:#888;text-decoration:none;border:1px solid #2a2a3e;border-radius:6px;padding:5px 12px}
+.header-registry:hover{background:#1a1a2e;color:#e0e0e0}
+.page-hero{width:100%;max-width:900px;padding:64px 24px 40px;text-align:center}
+.page-badge{display:inline-block;background:#1a1a2a;border:1px solid #5c5cff;border-radius:20px;padding:6px 18px;font-size:12px;font-weight:700;color:#5c5cff;margin-bottom:20px}
+.page-hero h2{font-size:36px;font-weight:800;color:#fff;margin-bottom:14px}
+.page-hero p{color:#888;font-size:16px;line-height:1.7;max-width:640px;margin:0 auto 16px}
+.page-content{width:100%;max-width:900px;padding:0 24px 64px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:40px}
+.card{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:24px}
+.card h3{font-size:15px;font-weight:700;color:#fff;margin-bottom:8px}
+.card p{font-size:14px;color:#888;line-height:1.6}
+.section-title{font-size:20px;font-weight:700;color:#fff;margin-bottom:20px}
+.steps-card{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:28px}
+.step{display:flex;gap:16px;align-items:flex-start;margin-bottom:20px}
+.step:last-child{margin-bottom:0}
+.step-num{background:#5c5cff;color:#fff;font-size:14px;font-weight:700;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-body h4{font-size:15px;font-weight:700;color:#fff;margin-bottom:4px}
+.step-body p{font-size:14px;color:#888;line-height:1.6}
+.step-body a{color:#4caf50}
+@media(max-width:700px){header{padding:12px 16px}.header-nav{gap:6px}.header-registry,.header-post,.header-verify{font-size:11px;padding:4px 8px}.page-hero{padding:40px 16px 28px}.page-hero h2{font-size:26px}.page-content{padding:0 16px 40px}.grid-2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1><a href="index.html" style="color:#fff;text-decoration:none;">Midnight Loadboard</a></h1>
+  <div class="header-nav">
+    <a href="loads.html" class="header-registry">Browse Loads</a>
+    <a href="document-vault.html" class="header-registry" style="color:#e0e0e0;border-color:#5c5cff;">Document Vault</a>
+    <a href="about-founder.html" class="header-registry">About</a>
+    <a href="carriers.html" class="header-registry">Carriers</a>
+    <a href="revoked-credentials.html" class="header-registry" style="color:#cf6679;border-color:#3a1d1d;">Revoked</a>
+    <a href="post-a-load.html" class="header-post">Post a Load</a>
+    <a href="get-verified.html" class="header-verify">✓ Get Verified</a>
+  </div>
+</header>
+<div class="page-hero">
+  <div class="page-badge">Carrier Bonus Feature</div>
+  <h2>Document Vault</h2>
+  <p>Bills of lading, delivery receipts, inspection reports — permanently stored, tamper-proof, and yours forever. No lost paperwork, no "the broker says they never got it."</p>
+</div>
+<div class="page-content">
+  <div class="grid-2">
+    <div class="card"><h3>✓ Permanent Storage</h3><p>Once minted, your document is stored on IPFS via Pinata — it can't be lost, deleted, or altered by anyone, including us.</p></div>
+    <div class="card"><h3>✓ Proof You Own</h3><p>The record lives in your own wallet as an NFT — not on a broker's server, not in an email you might lose access to.</p></div>
+    <div class="card"><h3>✓ Pull It Up Anytime</h3><p>Need to prove a delivery happened six months ago? Your permanent link is always there, always verifiable.</p></div>
+    <div class="card"><h3>✓ Your Own Records</h3><p>This isn't run by Midnight Loadboard — it's a feature of your own GameChanger Wallet. You're always in control of it.</p></div>
+  </div>
+  <div class="section-title">How to Mint a Document</div>
+  <div class="steps-card">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><h4>Get Your Document Into PDF Form</h4><p>GameChanger's minting tool requires a PDF file. If your document isn't already a PDF, use a free converter like <a href="https://freeconvert.com" target="_blank">freeconvert.com</a> — upload your file, choose PDF as the output, then download the converted file.</p></div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body"><h4>Open GameChanger Wallet</h4><p>Go to <a href="https://gamechanger.finance" target="_blank">gamechanger.finance</a> and open your wallet. Creating one is free and takes about 2 minutes. You'll need a small amount of ADA to cover the minting fee (usually less than $0.50).</p></div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body"><h4>Use the NFT Minting Tool</h4><p>In GameChanger, go to <strong style="color:#fff;">Tools → Mint NFT</strong>. Upload your PDF, give it a name (e.g. "BOL — July 18 — Durango to Albuquerque"), and mint. The document gets stored on IPFS and a permanent token is sent to your wallet.</p></div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-body"><h4>Save Your IPFS Link</h4><p>After minting, GameChanger gives you a permanent IPFS link to your document. Save it — you can share it with brokers or shippers who need to verify the delivery. It never expires.</p></div></div>
+  </div>
+</div>
+</body>
+</html>
