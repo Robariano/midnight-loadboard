@@ -61,58 +61,91 @@ label{font-size:12px;color:#555;font-weight:600;text-transform:uppercase;letter-
 <div class="page-hero">
   <div class="page-badge">TCT Verified Carrier Program</div>
   <h2>Get Your Carrier Credential</h2>
-  <p>Submit your documents below to join the Midnight Loadboard verified carrier network. Once approved, you'll receive a Trucker Credential Token (TCT) — a permanent digital credential on the Cardano blockchain that proves your CDL, insurance, and FMCSA authority to every shipper in the network.</p>
+  <p>Submit your documents below to join the Midnight Loadboard verified carrier network. Once approved, you'll receive a Trucker Credential Token (TCT) — a permanent digital credential on the Cardano blockchain.</p>
   <p class="highlight-green">Verification is free. No fees. No subscriptions.</p>
 </div>
 <div class="page-content">
   <div class="notice-green">
     <h3>New Authority? Start Here.</h3>
-    <p>A lot of platforms and brokers want a track record before they'll trust you with loads — which is hard when you can't build a track record without loads in the first place. I don't require history. I verify your actual documents — CDL, insurance, DOT authority — and issue a permanent credential based on what's real today, not how long you've been running. If your paperwork checks out, you don't have to wait months to prove yourself somewhere else first.</p>
+    <p>I don't require history. I verify your actual documents — CDL, insurance, DOT authority — and issue a permanent credential based on what's real today. If your paperwork checks out, you don't have to wait months to prove yourself somewhere else first.</p>
   </div>
   <div class="steps-card">
-    <div class="step"><div class="step-num">1</div><div class="step-body"><h4>Submit Your Documents</h4><p>Fill out the form below with your information and paste links to your documents. We'll review everything within 24–48 hours.</p></div></div>
-    <div class="step"><div class="step-num">2</div><div class="step-body"><h4>Set Up Your Cardano Wallet</h4><p>Download <a href="https://gamechanger.finance" target="_blank">GameChanger Wallet</a> (free). You'll need a wallet address to receive your TCT. Creating one takes about 2 minutes.</p></div></div>
-    <div class="step"><div class="step-num">3</div><div class="step-body"><h4>Receive Your TCT</h4><p>Once approved, we mint your Trucker Credential Token and send it to your wallet. It's permanent — it can't be deleted or altered by anyone, including us. Your credential is yours forever.</p></div></div>
+    <div class="step"><div class="step-num">1</div><div class="step-body"><h4>Submit Your Documents</h4><p>Fill out the form below. We'll review everything within 24–48 hours.</p></div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body"><h4>Set Up Your Cardano Wallet</h4><p>Download <a href="https://gamechanger.finance" target="_blank">GameChanger Wallet</a> (free). You'll need a wallet address to receive your TCT.</p></div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body"><h4>Receive Your TCT</h4><p>Once approved, we mint your Trucker Credential Token and send it to your wallet. It's permanent and yours forever.</p></div></div>
   </div>
   <div class="form-card">
     <h3>Submit Your Documents</h3>
     <p>Paste links to your documents — Google Drive, Dropbox, or any shareable link works fine.</p>
-    <form id="verify-form" action="https://formspree.io/f/xjgqnbkj" method="POST">
+    <form id="verify-form">
       <div class="form-row">
-        <div><label>Full Name</label><input type="text" name="name" placeholder="Your full legal name" required/></div>
-        <div><label>Email</label><input type="email" name="email" placeholder="Email address" required/></div>
+        <div><label>Full Name</label><input type="text" id="v-name" placeholder="Your full legal name" required/></div>
+        <div><label>Email</label><input type="email" id="v-email" placeholder="Email address" required/></div>
       </div>
       <div class="form-row">
-        <div><label>Phone</label><input type="tel" name="phone" placeholder="Phone number"/></div>
+        <div><label>Phone</label><input type="tel" id="v-phone" placeholder="Phone number"/></div>
         <div><label>CDL Class</label>
-          <select name="cdl_class" required>
+          <select id="v-cdl">
             <option value="" disabled selected>Select CDL class</option>
             <option>Class A</option><option>Class B</option><option>Class C</option>
           </select>
         </div>
       </div>
       <label>DOT / MC Number</label>
-      <input type="text" name="dot_mc" placeholder="DOT # and/or MC #"/>
+      <input type="text" id="v-dot" placeholder="DOT # and/or MC #"/>
       <label>Cardano Wallet Address</label>
-      <input type="text" name="wallet" placeholder="addr1... (your GameChanger or other Cardano wallet address)"/>
+      <input type="text" id="v-wallet" placeholder="addr1... (your GameChanger or other Cardano wallet address)"/>
       <label>Link to CDL</label>
-      <input type="url" name="cdl_link" placeholder="https://..."/>
+      <input type="url" id="v-cdl-link" placeholder="https://..."/>
       <label>Link to Insurance Certificate</label>
-      <input type="url" name="insurance_link" placeholder="https://..."/>
+      <input type="url" id="v-insurance" placeholder="https://..."/>
       <label>Link to FMCSA / Operating Authority</label>
-      <input type="url" name="authority_link" placeholder="https://..."/>
+      <input type="url" id="v-authority" placeholder="https://..."/>
       <label>Equipment Types</label>
-      <textarea name="equipment" placeholder="e.g. 53' Dry Van, 48' Flatbed — describe what you run"></textarea>
+      <textarea id="v-equipment" placeholder="e.g. 53' Dry Van, 48' Flatbed"></textarea>
       <label>Anything Else</label>
-      <textarea name="notes" placeholder="Endorsements, specialized equipment, or other info"></textarea>
-      <input type="hidden" name="_subject" value="New Carrier Verification — Midnight Loadboard"/>
+      <textarea id="v-notes" placeholder="Endorsements, specialized equipment, etc."></textarea>
       <button type="submit" class="btn-submit">Submit for Verification</button>
     </form>
     <div id="form-thanks">✓ Submitted! We'll review your documents and follow up within 24–48 hours.</div>
   </div>
 </div>
 <script>
-document.getElementById('verify-form').addEventListener('submit',async function(e){e.preventDefault();const btn=this.querySelector('.btn-submit');btn.textContent='Submitting…';btn.disabled=true;try{const resp=await fetch(this.action,{method:'POST',body:new FormData(this),headers:{Accept:'application/json'}});if(resp.ok){this.style.display='none';document.getElementById('form-thanks').style.display='block';}else{btn.textContent='Try Again';btn.disabled=false;}}catch(e){btn.textContent='Try Again';btn.disabled=false;}});
+const SUPABASE_URL = 'https://zfpznsxrwjhcmhcoseue.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_eGmZP2GZXxt6nnic_xfeKQ_OwjuTl0i';
+
+document.getElementById('verify-form').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const btn = this.querySelector('.btn-submit');
+  btn.textContent = 'Submitting…';
+  btn.disabled = true;
+  const body = {
+    name: document.getElementById('v-name').value,
+    email: document.getElementById('v-email').value,
+    phone: document.getElementById('v-phone').value,
+    cdl_class: document.getElementById('v-cdl').value,
+    dot_mc: document.getElementById('v-dot').value,
+    wallet: document.getElementById('v-wallet').value,
+    cdl_link: document.getElementById('v-cdl-link').value,
+    insurance_link: document.getElementById('v-insurance').value,
+    authority_link: document.getElementById('v-authority').value,
+    equipment: document.getElementById('v-equipment').value,
+    notes: document.getElementById('v-notes').value,
+    status: 'pending'
+  };
+  const resp = await fetch(SUPABASE_URL + '/rest/v1/verifications', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'},
+    body: JSON.stringify(body)
+  });
+  if(resp.ok){
+    this.style.display='none';
+    document.getElementById('form-thanks').style.display='block';
+  } else {
+    btn.textContent='Try Again';
+    btn.disabled=false;
+  }
+});
 </script>
 </body>
 </html>

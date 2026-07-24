@@ -59,55 +59,88 @@ label{font-size:12px;color:#555;font-weight:600;text-transform:uppercase;letter-
 </div>
 <div class="page-content">
   <div class="grid-2">
-    <div class="feat-card"><h3>✓ Verified Carriers Only</h3><p>Every carrier holds a Trucker Credential Token confirming their CDL, insurance, and FMCSA authority.</p></div>
-    <div class="feat-card"><h3>✓ Rate Confirmation Upfront</h3><p>You receive a signed rate confirmation before any carrier touches your freight.</p></div>
+    <div class="feat-card"><h3>✓ Verified Carriers Only</h3><p>Every carrier holds a TCT confirming their CDL, insurance, and FMCSA authority.</p></div>
+    <div class="feat-card"><h3>✓ Rate Confirmation Upfront</h3><p>You receive a rate confirmation before any carrier touches your freight.</p></div>
     <div class="feat-card"><h3>✓ Real-Time Updates</h3><p>We communicate pickup confirmation and proof of delivery directly to you.</p></div>
-    <div class="feat-card"><h3>✓ 7-Day Payment Terms</h3><p>Simple, fast payment terms — no NET30 surprises. You know exactly what you owe and when.</p></div>
-    <div class="feat-card"><h3>✓ Stablecoin Payments (USDM)</h3><p>Pay carriers directly in USDM via GameChanger Wallet — settle on delivery confirmation, no bank delays.</p></div>
+    <div class="feat-card"><h3>✓ 7-Day Payment Terms</h3><p>No NET30 surprises. You know exactly what you owe and when.</p></div>
+    <div class="feat-card"><h3>✓ Stablecoin Payments (USDM)</h3><p>Pay carriers in USDM via GameChanger Wallet — settle on delivery, no bank delays.</p></div>
   </div>
   <div class="form-card">
     <h3>Load Details</h3>
-    <form id="load-form" action="https://formspree.io/f/xjgqnbkj" method="POST">
+    <form id="load-form">
       <div class="form-row">
-        <div><label>Pickup City &amp; State</label><input type="text" name="pickup" placeholder="e.g. Durango, CO" required/></div>
-        <div><label>Delivery City &amp; State</label><input type="text" name="delivery" placeholder="e.g. Albuquerque, NM" required/></div>
+        <div><label>Pickup City &amp; State</label><input type="text" id="l-pickup" placeholder="e.g. Durango, CO" required/></div>
+        <div><label>Delivery City &amp; State</label><input type="text" id="l-delivery" placeholder="e.g. Albuquerque, NM" required/></div>
       </div>
       <div class="form-row">
-        <div><label>Pickup Date</label><input type="date" name="pickup_date" required/></div>
+        <div><label>Pickup Date</label><input type="date" id="l-date" required/></div>
         <div><label>Equipment Type</label>
-          <select name="equipment" required>
+          <select id="l-equipment" required>
             <option value="" disabled selected>Select equipment</option>
             <option>Dry Van</option><option>Flatbed</option><option>Reefer</option><option>Tanker</option><option>Step Deck</option><option>Other</option>
           </select>
         </div>
       </div>
       <div class="form-row">
-        <div><label>Weight (lbs)</label><input type="text" name="weight" placeholder="e.g. 38,000"/></div>
-        <div><label>Commodity</label><input type="text" name="commodity" placeholder="e.g. Beer / Beverage"/></div>
+        <div><label>Weight (lbs)</label><input type="text" id="l-weight" placeholder="e.g. 38,000"/></div>
+        <div><label>Commodity</label><input type="text" id="l-commodity" placeholder="e.g. Beer / Beverage"/></div>
       </div>
       <div class="form-row">
-        <div><label>Your Rate Offer</label><input type="text" name="rate" placeholder="e.g. $1,150"/></div>
+        <div><label>Your Rate Offer</label><input type="text" id="l-rate" placeholder="e.g. $1,150"/></div>
         <div><label>Payment Method</label>
-          <select name="payment">
+          <select id="l-payment">
             <option value="" disabled selected>Select payment</option>
             <option>Net 7 (Standard)</option><option>USDM Stablecoin</option>
           </select>
         </div>
       </div>
       <label>Additional Notes</label>
-      <textarea name="notes" placeholder="Hazmat, special handling, dock hours, etc."></textarea>
+      <textarea id="l-notes" placeholder="Hazmat, special handling, dock hours, etc."></textarea>
       <label>Your Name</label>
-      <input type="text" name="name" placeholder="Full Name" required/>
+      <input type="text" id="l-name" placeholder="Full Name" required/>
       <label>Your Email</label>
-      <input type="email" name="email" placeholder="Email Address" required/>
-      <input type="hidden" name="_subject" value="New Load Posted — Midnight Loadboard"/>
+      <input type="email" id="l-email" placeholder="Email Address" required/>
       <button type="submit" class="btn-submit">Submit Load</button>
     </form>
     <div id="form-thanks">✓ Load submitted! We'll reach out within a few hours with a matched carrier and rate confirmation.</div>
   </div>
 </div>
 <script>
-document.getElementById('load-form').addEventListener('submit',async function(e){e.preventDefault();const btn=this.querySelector('.btn-submit');btn.textContent='Submitting…';btn.disabled=true;try{const resp=await fetch(this.action,{method:'POST',body:new FormData(this),headers:{Accept:'application/json'}});if(resp.ok){this.style.display='none';document.getElementById('form-thanks').style.display='block';}else{btn.textContent='Try Again';btn.disabled=false;}}catch(e){btn.textContent='Try Again';btn.disabled=false;}});
+const SUPABASE_URL = 'https://zfpznsxrwjhcmhcoseue.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_eGmZP2GZXxt6nnic_xfeKQ_OwjuTl0i';
+
+document.getElementById('load-form').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const btn = this.querySelector('.btn-submit');
+  btn.textContent = 'Submitting…';
+  btn.disabled = true;
+  const body = {
+    name: document.getElementById('l-name').value,
+    email: document.getElementById('l-email').value,
+    pickup: document.getElementById('l-pickup').value,
+    delivery: document.getElementById('l-delivery').value,
+    pickup_date: document.getElementById('l-date').value,
+    equipment: document.getElementById('l-equipment').value,
+    weight: document.getElementById('l-weight').value,
+    commodity: document.getElementById('l-commodity').value,
+    rate: document.getElementById('l-rate').value,
+    payment: document.getElementById('l-payment').value,
+    notes: document.getElementById('l-notes').value,
+    status: 'new'
+  };
+  const resp = await fetch(SUPABASE_URL + '/rest/v1/load_requests', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'},
+    body: JSON.stringify(body)
+  });
+  if(resp.ok){
+    this.style.display='none';
+    document.getElementById('form-thanks').style.display='block';
+  } else {
+    btn.textContent='Try Again';
+    btn.disabled=false;
+  }
+});
 </script>
 </body>
 </html>
