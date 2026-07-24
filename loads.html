@@ -39,6 +39,8 @@ header h1{font-size:20px;font-weight:700;color:#fff}
 .load-pay{font-size:13px;color:#5c5cff}
 .btn-claim{background:transparent;color:#5c5cff;font-size:13px;font-weight:700;padding:8px 18px;border:1px solid #5c5cff;border-radius:6px;cursor:pointer;text-decoration:none;display:inline-block}
 .btn-claim:hover{background:#1a1a3a}
+.empty-state{text-align:center;padding:48px 24px;color:#555;font-size:15px;line-height:1.7}
+.empty-state a{color:#4caf50;font-weight:600;text-decoration:none}
 @media(max-width:700px){header{padding:12px 16px}.header-nav{gap:6px}.header-registry,.header-post,.header-verify{font-size:11px;padding:4px 8px}.page-hero{padding:40px 16px 28px}.page-hero h2{font-size:26px}.page-content{padding:0 16px 40px}.loads-grid{grid-template-columns:1fr}.stats-row{gap:8px}}
 </style>
 </head>
@@ -62,50 +64,73 @@ header h1{font-size:20px;font-weight:700;color:#fff}
 </div>
 <div class="page-content">
   <div class="stats-row">
-    <div class="stat-box"><div class="stat-num">4</div><div class="stat-label">Open Loads</div></div>
-    <div class="stat-box"><div class="stat-num">3</div><div class="stat-label">States Covered</div></div>
+    <div class="stat-box"><div class="stat-num" id="load-count">0</div><div class="stat-label">Open Loads</div></div>
     <div class="stat-box"><div class="stat-num">7</div><div class="stat-label">Days to Payment</div></div>
   </div>
   <div class="filter-bar">
     <button class="filter-btn active" onclick="filterLoads('all',this)">All Equipment</button>
-    <button class="filter-btn" onclick="filterLoads('dry-van',this)">Dry Van</button>
-    <button class="filter-btn" onclick="filterLoads('flatbed',this)">Flatbed</button>
-    <button class="filter-btn" onclick="filterLoads('reefer',this)">Reefer</button>
-    <button class="filter-btn" onclick="filterLoads('tanker',this)">Tanker</button>
+    <button class="filter-btn" onclick="filterLoads('Dry Van',this)">Dry Van</button>
+    <button class="filter-btn" onclick="filterLoads('Flatbed',this)">Flatbed</button>
+    <button class="filter-btn" onclick="filterLoads('Reefer',this)">Reefer</button>
+    <button class="filter-btn" onclick="filterLoads('Tanker',this)">Tanker</button>
   </div>
-  <div class="loads-grid" id="loads-grid">
-    <div class="load-card" data-type="dry-van">
-      <div class="load-route">Durango, CO → Albuquerque, NM</div>
-      <div class="load-tags"><span class="tag">Dry Van</span><span class="tag">Beer / Beverage</span></div>
-      <div class="load-details"><span class="load-label">WEIGHT</span><span class="load-val">38,000 lbs</span><span class="load-label">PICKUP</span><span class="load-val">Jul 18</span></div>
-      <div class="load-rate">$1,150</div>
-      <div class="load-footer"><span class="load-pay">USDM Stablecoin</span><a href="get-verified.html" class="btn-claim">Connect to Claim</a></div>
-    </div>
-    <div class="load-card" data-type="flatbed">
-      <div class="load-route">Denver, CO → Phoenix, AZ</div>
-      <div class="load-tags"><span class="tag">Flatbed</span><span class="tag">Building Materials</span></div>
-      <div class="load-details"><span class="load-label">WEIGHT</span><span class="load-val">42,000 lbs</span><span class="load-label">PICKUP</span><span class="load-val">Jul 21</span></div>
-      <div class="load-rate">$1,975</div>
-      <div class="load-footer"><span class="load-pay">Net 7</span><a href="get-verified.html" class="btn-claim">Connect to Claim</a></div>
-    </div>
-    <div class="load-card" data-type="dry-van">
-      <div class="load-route">Farmington, NM → Grand Junction, CO</div>
-      <div class="load-tags"><span class="tag">Dry Van</span><span class="tag">Auto Parts</span></div>
-      <div class="load-details"><span class="load-label">WEIGHT</span><span class="load-val">22,000 lbs</span><span class="load-label">PICKUP</span><span class="load-val">Jul 19</span></div>
-      <div class="load-rate">$875</div>
-      <div class="load-footer"><span class="load-pay">Net 7</span><a href="get-verified.html" class="btn-claim">Connect to Claim</a></div>
-    </div>
-    <div class="load-card" data-type="reefer">
-      <div class="load-route">El Paso, TX → Durango, CO</div>
-      <div class="load-tags"><span class="tag">Reefer</span><span class="tag">Refrigerated Produce</span></div>
-      <div class="load-details"><span class="load-label">WEIGHT</span><span class="load-val">34,000 lbs</span><span class="load-label">PICKUP</span><span class="load-val">Jul 22</span></div>
-      <div class="load-rate">$2,200</div>
-      <div class="load-footer"><span class="load-pay">USDM Stablecoin</span><a href="get-verified.html" class="btn-claim">Connect to Claim</a></div>
-    </div>
-  </div>
+  <div class="loads-grid" id="loads-grid"></div>
 </div>
 <script>
-function filterLoads(type,btn){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.querySelectorAll('.load-card').forEach(card=>{card.style.display=(type==='all'||card.dataset.type===type)?'block':'none';});}
+const SUPABASE_URL = 'https://zfpznsxrwjhcmhcoseue.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_eGmZP2GZXxt6nnic_xfeKQ_OwjuTl0i';
+let allLoads = [];
+
+async function fetchLoads() {
+  try {
+    const resp = await fetch(SUPABASE_URL + '/rest/v1/loads?status=eq.open&order=created_at.desc', {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY }
+    });
+    allLoads = await resp.json();
+    document.getElementById('load-count').textContent = allLoads.length;
+    renderLoads(allLoads);
+  } catch(e) {
+    document.getElementById('loads-grid').innerHTML = '<div style="color:#555;padding:24px;text-align:center">Could not load freight data.</div>';
+  }
+}
+
+function renderLoads(loads) {
+  const grid = document.getElementById('loads-grid');
+  if (!loads.length) {
+    grid.style.display = 'block';
+    grid.innerHTML = '<div class="empty-state">No loads available right now.<br/>Check back soon or <a href="post-a-load.html">post a load</a>.</div>';
+    return;
+  }
+  grid.style.display = 'grid';
+  grid.innerHTML = loads.map(l => `
+    <div class="load-card">
+      <div class="load-route">${l.pickup} → ${l.delivery}</div>
+      <div class="load-tags">
+        <span class="tag">${l.equipment}</span>
+        ${l.commodity ? '<span class="tag">'+l.commodity+'</span>' : ''}
+      </div>
+      <div class="load-details">
+        ${l.weight ? '<span class="load-label">WEIGHT</span><span class="load-val">'+l.weight+'</span>' : ''}
+        <span class="load-label">PICKUP</span><span class="load-val">${l.pickup_date}</span>
+        ${l.notes ? '<span class="load-label">NOTES</span><span class="load-val">'+l.notes+'</span>' : ''}
+      </div>
+      <div class="load-rate">${l.rate}</div>
+      <div class="load-footer">
+        <span class="load-pay">${l.payment || ''}</span>
+        <a href="get-verified.html" class="btn-claim">Connect to Claim</a>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterLoads(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = type === 'all' ? allLoads : allLoads.filter(l => l.equipment === type);
+  renderLoads(filtered);
+}
+
+fetchLoads();
 </script>
 </body>
 </html>
