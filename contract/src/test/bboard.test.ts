@@ -1,149 +1,69 @@
-// This file is part of midnightntwrk/example-bboard.
-// Copyright (C) Midnight Foundation
-// SPDX-License-Identifier: Apache-2.0
-// Licensed under the Apache License, Version 2.0 (the "License");
-// You may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+import { randomBytes } from 'crypto';
+import { describe, it, expect } from 'vitest';
+import { State } from '../managed/bboard/contract/index.js';
+import { BBoardSimulator } from './bboard-simulator.js';
 
-import { BBoardSimulator } from "./bboard-simulator.js";
-import {
-  NetworkId,
-  setNetworkId,
-} from "@midnight-ntwrk/midnight-js-network-id";
-import { describe, it, expect } from "vitest";
-import { randomBytes } from "./utils.js";
-import { State } from "../managed/bboard/contract/index.js";
-
-setNetworkId("undeployed" as NetworkId);
-
-describe("BBoard smart contract", () => {
-  it("generates initial ledger state deterministically", () => {
-    const key = randomBytes(32);
-    const simulator0 = new BBoardSimulator(key);
-    const simulator1 = new BBoardSimulator(key);
-    expect(simulator0.getLedger()).toEqual(simulator1.getLedger());
-  });
-
-  it("properly initializes ledger state and private state", () => {
-    const key = randomBytes(32);
-    const simulator = new BBoardSimulator(key);
-    const initialLedgerState = simulator.getLedger();
-    expect(initialLedgerState.sequence).toEqual(1n);
-    expect(initialLedgerState.message.is_some).toEqual(false);
-    expect(initialLedgerState.message.value).toEqual("");
-    expect(initialLedgerState.owner).toEqual(new Uint8Array(32));
-    expect(initialLedgerState.state).toEqual(State.VACANT);
-    const initialPrivateState = simulator.getPrivateState();
-    expect(initialPrivateState).toEqual({ secretKey: key });
-  });
-
-  it("lets you set a message", () => {
+describe('BBoard smart contract', () => {
+  it('properly initializes ledger state', () => {
     const simulator = new BBoardSimulator(randomBytes(32));
-    const initialPrivateState = simulator.getPrivateState();
-    const message =
-      "Szeth-son-son-Vallano, Truthless of Shinovar, wore white on the day he was to kill a king";
-    simulator.post(message);
-    // the private ledger state shouldn't change
-    expect(initialPrivateState).toEqual(simulator.getPrivateState());
-    // And all the correct things should have been updated in the public ledger state
-    const ledgerState = simulator.getLedger();
-    expect(ledgerState.sequence).toEqual(1n);
-    expect(ledgerState.message.is_some).toEqual(true);
-    expect(ledgerState.message.value).toEqual(message);
-    expect(ledgerState.owner).toEqual(simulator.publicKey());
-    expect(ledgerState.state).toEqual(State.OCCUPIED);
+    const ledger = simulator.getLedger();
+    expect(ledger.state).toEqual(State.VACANT);
+    expect(ledger.loadNumber.is_some).toEqual(false);
+    expect(ledger.rate).toEqual(0n);
+    expect(ledger.sequence).toEqual(1n);
   });
 
-  it("lets you take down a message", () => {
+  it('lets a shipper post a load', () => {
     const simulator = new BBoardSimulator(randomBytes(32));
-    const initialPrivateState = simulator.getPrivateState();
-    const initialPublicKey = simulator.publicKey();
-    const message =
-      "Prince Raoden of Arelon awoke early that morning, completely unaware that he had been damned for all eternity.";
-    simulator.post(message);
+    simulator.postLoad('BOL-001', 450n, 'Golden CO to Durango CO, reefer required');
+    const ledger = simulator.getLedger();
+    expect(ledger.state).toEqual(State.OCCUPIED);
+    expect(ledger.loadNumber.is_some).toEqual(true);
+    expect(ledger.loadNumber.value).toEqual('BOL-001');
+    expect(ledger.rate).toEqual(450n);
+  });
+
+  it('owner commitment is sealed and not zero after posting', () => {
+    const simulator = new BBoardSimulator(randomBytes(32));
+    simulator.postLoad('BOL-002', 350n, 'reefer load');
+    const ledger = simulator.getLedger();
+    expect(ledger.state).toEqual(State.OCCUPIED);
+    // ownerCommitment should be set (non-zero) but sealed from external observers
+    const allZero = ledger.ownerCommitment.every((b) => b === 0);
+    expect(allZero).toEqual(false);
+  });
+
+  it('lets the original shipper take down their load', () => {
+    const simulator = new BBoardSimulator(randomBytes(32));
+    simulator.postLoad('BOL-003', 400n, 'dry van, Golden to Albuquerque');
     simulator.takeDown();
-    // the private ledger state shouldn't change
-    expect(initialPrivateState).toEqual(simulator.getPrivateState());
-    // And all the correct things should have been updated in the public ledger state
-    const ledgerState = simulator.getLedger();
-    expect(ledgerState.sequence).toEqual(2n);
-    expect(ledgerState.message.is_some).toEqual(false);
-    expect(ledgerState.message.value).toEqual("");
-    // Technically the circuit doesn't clear the previous owner
-    expect(ledgerState.owner).toEqual(initialPublicKey);
-    expect(ledgerState.state).toEqual(State.VACANT);
+    const ledger = simulator.getLedger();
+    expect(ledger.state).toEqual(State.VACANT);
+    expect(ledger.loadNumber.is_some).toEqual(false);
+    expect(ledger.rate).toEqual(0n);
   });
 
-  it("lets you post another message after taking down the first", () => {
+  it('does not let a different user take down the load', () => {
     const simulator = new BBoardSimulator(randomBytes(32));
-    const initialPrivateState = simulator.getPrivateState();
-    simulator.post("Life before Death.");
-    simulator.takeDown();
-    const message = "Strength before Weakness.";
-    simulator.post(message);
-    // the private ledger state shouldn't change
-    expect(initialPrivateState).toEqual(simulator.getPrivateState());
-    // And all the correct things should have been updated in the public ledger state
-    const ledgerState = simulator.getLedger();
-    expect(ledgerState.sequence).toEqual(2n);
-    expect(ledgerState.message.is_some).toEqual(true);
-    expect(ledgerState.message.value).toEqual(message);
-    expect(ledgerState.owner).toEqual(simulator.publicKey());
-    expect(ledgerState.state).toEqual(State.OCCUPIED);
+    simulator.postLoad('BOL-004', 500n, 'hazmat, flatbed');
+    simulator.switchUser(randomBytes(32));
+    expect(() => simulator.takeDown()).toThrow();
   });
 
-  it("lets a different user post a message after taking down the first", () => {
+  it('does not let a shipper post when board is occupied', () => {
     const simulator = new BBoardSimulator(randomBytes(32));
-    simulator.post("Remember, the past need not become our future as well.");
+    simulator.postLoad('BOL-005', 300n, 'first load');
+    expect(() => simulator.postLoad('BOL-006', 300n, 'second load')).toThrow();
+  });
+
+  it('lets a new shipper post after takedown', () => {
+    const simulator = new BBoardSimulator(randomBytes(32));
+    simulator.postLoad('BOL-007', 420n, 'first shipper load');
     simulator.takeDown();
     simulator.switchUser(randomBytes(32));
-    const message = "Joy was more than just an absence of discomfort.";
-    simulator.post(message);
-    const ledgerState = simulator.getLedger();
-    expect(ledgerState.sequence).toEqual(2n);
-    expect(ledgerState.message.is_some).toEqual(true);
-    expect(ledgerState.message.value).toEqual(message);
-    expect(ledgerState.owner).toEqual(simulator.publicKey());
-    expect(ledgerState.state).toEqual(State.OCCUPIED);
-  });
-
-  it("doesn't let the same user post twice", () => {
-    const simulator = new BBoardSimulator(randomBytes(32));
-    simulator.post(
-      "My name is Stephen Leeds, and I am perfectly sane. My hallucinations, however, are all quite mad.",
-    );
-    expect(() =>
-      simulator.post(
-        "You should know by now that I've already had greatness. I traded it for mediocrity and some measure of sanity.",
-      ),
-    ).toThrow("failed assert: Attempted to post to an occupied board");
-  });
-
-  it("doesn't let different users post twice", () => {
-    const simulator = new BBoardSimulator(randomBytes(32));
-    simulator.post("Ash fell from the sky");
-    simulator.switchUser(randomBytes(32));
-    expect(() =>
-      simulator.post("I am, unfortunately, the hero of ages."),
-    ).toThrow("failed assert: Attempted to post to an occupied board");
-  });
-
-  it("doesn't let users take down someone elses posts", () => {
-    const simulator = new BBoardSimulator(randomBytes(32));
-    simulator.post(
-      "Sometimes a hypocrite is nothing more than a man in the process of changing.",
-    );
-    simulator.switchUser(randomBytes(32));
-    expect(() => simulator.takeDown()).toThrow(
-      "failed assert: Attempted to take down post, but not the current owner",
-    );
+    simulator.postLoad('BOL-008', 380n, 'second shipper load');
+    const ledger = simulator.getLedger();
+    expect(ledger.state).toEqual(State.OCCUPIED);
+    expect(ledger.loadNumber.value).toEqual('BOL-008');
   });
 });

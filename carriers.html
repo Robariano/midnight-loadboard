@@ -18,6 +18,7 @@ header h1{font-size:20px;font-weight:700;color:#fff}
 .page-badge{display:inline-block;background:#1a1a2a;border:1px solid #5c5cff;border-radius:20px;padding:6px 18px;font-size:12px;font-weight:700;color:#5c5cff;margin-bottom:20px}
 .page-hero h2{font-size:36px;font-weight:800;color:#fff;margin-bottom:14px}
 .page-hero p{color:#888;font-size:16px;line-height:1.7;max-width:600px;margin:0 auto 10px}
+.highlight-green{color:#4caf50;font-weight:600}
 .page-content{width:100%;max-width:900px;padding:0 24px 64px}
 .stats-row{display:flex;gap:16px;margin-bottom:40px;flex-wrap:wrap}
 .stat-box{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:24px;text-align:center;flex:1;min-width:120px}
@@ -26,10 +27,18 @@ header h1{font-size:20px;font-weight:700;color:#fff}
 .filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
 .filter-btn{background:transparent;color:#888;font-size:13px;font-weight:600;padding:6px 16px;border:1px solid #2a2a3e;border-radius:20px;cursor:pointer}
 .filter-btn.active{background:#1e1e3a;color:#5c5cff;border-color:#5c5cff}
-.empty-state{text-align:center;padding:48px 24px;color:#555;font-size:15px;line-height:1.7}
+.carrier-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.carrier-card{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:24px}
+.carrier-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.carrier-name{font-size:16px;font-weight:700;color:#fff}
+.verified-badge{display:inline-flex;align-items:center;gap:4px;background:#0f1a0f;border:1px solid #1d3a1d;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;color:#4caf50}
+.carrier-detail{font-size:13px;color:#888;margin-bottom:4px}
+.carrier-detail strong{color:#e0e0e0;font-weight:600}
+.carrier-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.carrier-tag{font-size:12px;color:#5c5cff;border:1px solid #2d2d6a;border-radius:4px;padding:2px 8px;background:#1a1a3a}
+.empty-state{text-align:center;padding:48px 24px;color:#555;font-size:15px;line-height:1.8}
 .empty-state a{color:#4caf50;font-weight:600;text-decoration:none}
-.highlight-green{color:#4caf50;font-weight:600}
-@media(max-width:700px){header{padding:12px 16px}.header-nav{gap:6px}.header-registry,.header-post,.header-verify{font-size:11px;padding:4px 8px}.page-hero{padding:40px 16px 28px}.page-hero h2{font-size:26px}.page-content{padding:0 16px 40px}.stats-row{gap:8px}}
+@media(max-width:700px){header{padding:12px 16px}.header-nav{gap:6px}.header-registry,.header-post,.header-verify{font-size:11px;padding:4px 8px}.page-hero{padding:40px 16px 28px}.page-hero h2{font-size:26px}.page-content{padding:0 16px 40px}.stats-row{gap:8px}.carrier-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -46,27 +55,74 @@ header h1{font-size:20px;font-weight:700;color:#fff}
   </div>
 </header>
 <div class="page-hero">
-  <div class="page-badge">TCT Verified Network</div>
+  <div class="page-badge">Verified Carrier Network</div>
   <h2>Verified Carrier Registry</h2>
-  <p>Every carrier listed here holds a Trucker Credential Token (TCT) on the Cardano blockchain — confirming their CDL, insurance, and FMCSA authority. Verified before they ever touch your freight.</p>
-  <p class="highlight-green">Carriers can be paid in USDM stablecoin via GameChanger Wallet.</p>
+  <p>Every carrier listed here has been personally verified — CDL, insurance, and FMCSA authority confirmed before they ever touch a load.</p>
+  <p class="highlight-green">Net 7 payment terms on every load. No factoring companies.</p>
 </div>
 <div class="page-content">
   <div class="stats-row">
-    <div class="stat-box"><div class="stat-num">0</div><div class="stat-label">Verified Carriers</div></div>
+    <div class="stat-box"><div class="stat-num" id="carrier-count">0</div><div class="stat-label">Verified Carriers</div></div>
     <div class="stat-box"><div class="stat-num">7</div><div class="stat-label">Days to Payment</div></div>
+    <div class="stat-box"><div class="stat-num">24hr</div><div class="stat-label">Verification Time</div></div>
   </div>
   <div class="filter-bar">
-    <button class="filter-btn active">All Equipment</button>
-    <button class="filter-btn">Dry Van</button>
-    <button class="filter-btn">Flatbed</button>
-    <button class="filter-btn">Reefer</button>
-    <button class="filter-btn">Tanker</button>
+    <button class="filter-btn active" onclick="filterCarriers('all',this)">All Equipment</button>
+    <button class="filter-btn" onclick="filterCarriers('Dry Van',this)">Dry Van</button>
+    <button class="filter-btn" onclick="filterCarriers('Flatbed',this)">Flatbed</button>
+    <button class="filter-btn" onclick="filterCarriers('Reefer',this)">Reefer</button>
+    <button class="filter-btn" onclick="filterCarriers('Tanker',this)">Tanker</button>
   </div>
-  <div class="empty-state">
-    No verified carriers yet — be the first.<br/>
-    This network is brand new. <a href="get-verified.html">Get your TCT credential</a> and be carrier #1.
-  </div>
+  <div class="carrier-grid" id="carrier-grid"></div>
 </div>
+<script>
+const SUPABASE_URL = 'https://zfpznsxrwjhcmhcoseue.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_eGmZP2GZXxt6nnic_xfeKQ_OwjuTl0i';
+let allCarriers = [];
+
+async function fetchCarriers() {
+  try {
+    const resp = await fetch(SUPABASE_URL+'/rest/v1/verifications?status=eq.approved&order=created_at.desc', {
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+    });
+    allCarriers = await resp.json();
+    document.getElementById('carrier-count').textContent = allCarriers.length;
+    renderCarriers(allCarriers);
+  } catch(e) {
+    document.getElementById('carrier-grid').innerHTML = '<div style="color:#555;padding:24px;text-align:center">Could not load carrier data.</div>';
+  }
+}
+
+function renderCarriers(carriers) {
+  const grid = document.getElementById('carrier-grid');
+  if(!carriers.length){
+    grid.style.display='block';
+    grid.innerHTML='<div class="empty-state">No verified carriers yet — be the first.<br/>This network is brand new. <a href="get-verified.html">Get your credential</a> and be carrier #1.</div>';
+    return;
+  }
+  grid.style.display='grid';
+  grid.innerHTML=carriers.map(c=>{
+    const equipment = (c.equipment||'').split(',').map(e=>e.trim()).filter(Boolean);
+    return `<div class="carrier-card" data-equipment="${c.equipment||''}">
+      <div class="carrier-header">
+        <div class="carrier-name">${c.name||'Verified Carrier'}</div>
+        <span class="verified-badge">✓ Verified</span>
+      </div>
+      <div class="carrier-detail">CDL: <strong>${c.cdl_class||'—'}</strong></div>
+      <div class="carrier-detail">DOT/MC: <strong>${c.dot_mc||'—'}</strong></div>
+      <div class="carrier-tags">${equipment.map(e=>'<span class="carrier-tag">'+e+'</span>').join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+function filterCarriers(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = type==='all' ? allCarriers : allCarriers.filter(c=>(c.equipment||'').includes(type));
+  renderCarriers(filtered);
+}
+
+fetchCarriers();
+</script>
 </body>
 </html>

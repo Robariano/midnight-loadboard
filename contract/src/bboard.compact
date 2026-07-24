@@ -15,7 +15,7 @@ export ledger state: State;
 export ledger loadNumber: Maybe<Opaque<'string'>>;
 export ledger rate: Uint<64>;
 export ledger notes: Maybe<Opaque<'string'>>;
-export ledger ownerCommitment: Bytes<32>;
+sealed ledger ownerCommitment: Bytes<32>;
 export ledger sequence: Counter;
 
 export ledger carrierStatus: CarrierStatus;

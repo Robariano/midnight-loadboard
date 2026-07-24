@@ -21,7 +21,7 @@ export const Header: React.FC = () => (
       <LocalShippingIcon sx={{ color: '#7c6af7', fontSize: 32 }} />
       <Box>
         <Typography variant="h6" sx={{ color: '#fff', fontWeight: 800, lineHeight: 1, letterSpacing: '-0.5px' }}>
-          Midnight Lace
+          StealthLoad
         </Typography>
         <Typography variant="caption" sx={{ color: '#7c6af7', fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase' }}>
           Loadboard

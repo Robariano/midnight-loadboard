@@ -85,7 +85,7 @@ const displayLedgerState = async (
     logger.info(`Rate: ${ledgerState.rate} cents/mile`);
     logger.info(`Notes: '${ledgerState.notes.is_some ? ledgerState.notes.value : 'none'}'`);
     logger.info(`Sequence: ${ledgerState.sequence}`);
-    logger.info(`Owner commitment (hidden): '${toHex(ledgerState.ownerCommitment)}'`);
+    logger.info(`Owner commitment: [sealed - hidden on-chain]`);
   }
 };
 
@@ -279,7 +279,7 @@ export const run = async (config: Config, testEnv: TestEnvironment, logger: Logg
 function logError(logger: Logger, e: unknown) {
   if (e instanceof Error) {
     logger.error(`Found error '${e.message}'`);
-    logger.debug(`${e.stack}`);
+    logger.error(`Stack: ${e.stack}`); try { logger.error(`FullError: ${JSON.stringify(e, Object.getOwnPropertyNames(e))}`); } catch(_){} 
   } else {
     logger.error(`Found error (unknown type)`);
   }

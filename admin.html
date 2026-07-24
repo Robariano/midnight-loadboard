@@ -9,7 +9,7 @@
 body{background:#0a0a12;color:#e0e0e0;font-family:Helvetica,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 24px}
 h1{font-size:24px;font-weight:700;color:#fff;margin-bottom:8px}
 .subtitle{color:#555;font-size:14px;margin-bottom:32px}
-.login-box{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:32px;width:100%;max-width:400px;margin-bottom:32px}
+.login-box{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:32px;width:100%;max-width:400px}
 .login-box h2{font-size:16px;font-weight:700;color:#fff;margin-bottom:16px}
 input,select,textarea{background:#0a0a12;border:1px solid #2a2a3e;border-radius:8px;color:#e0e0e0;font-size:14px;padding:11px 14px;width:100%;outline:none;margin-bottom:12px;font-family:inherit}
 input:focus,select:focus,textarea:focus{border-color:#5c5cff}
@@ -22,11 +22,13 @@ label{font-size:12px;color:#555;font-weight:600;text-transform:uppercase;letter-
 .btn-green:hover{background:#5cbf60}
 .btn-blue{background:#5c5cff;color:#fff}
 .btn-blue:hover{background:#7070ff}
-.btn-red{background:transparent;color:#cf6679;border:1px solid #3a1d1d;font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;width:auto}
-.btn-red:hover{background:#1a0f0f}
-.btn-sm{font-size:12px;padding:5px 12px;border-radius:6px;border:none;cursor:pointer;font-weight:600}
+.btn-sm{font-size:12px;padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-weight:600;width:auto}
 .btn-approve{background:#0f1a0f;color:#4caf50;border:1px solid #1d3a1d}
 .btn-approve:hover{background:#1a3a1a}
+.btn-reject{background:#1a0f0f;color:#cf6679;border:1px solid #3a1d1d}
+.btn-reject:hover{background:#2a0f0f}
+.btn-red{background:transparent;color:#cf6679;border:1px solid #3a1d1d;font-size:12px;padding:6px 14px;border-radius:6px;cursor:pointer;width:auto}
+.btn-red:hover{background:#1a0f0f}
 #admin-panel{display:none;width:100%;max-width:900px}
 .section{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:28px;margin-bottom:24px}
 .section h2{font-size:18px;font-weight:700;color:#fff;margin-bottom:4px}
@@ -35,19 +37,22 @@ label{font-size:12px;color:#555;font-weight:600;text-transform:uppercase;letter-
 .tab-btn{background:transparent;color:#888;font-size:13px;font-weight:600;padding:8px 18px;border:1px solid #2a2a3e;border-radius:20px;cursor:pointer}
 .tab-btn.active{background:#1e1e3a;color:#5c5cff;border-color:#5c5cff}
 .row-card{border:1px solid #2a2a3e;border-radius:8px;padding:16px;margin-bottom:12px}
-.row-card h4{font-size:15px;font-weight:700;color:#fff;margin-bottom:4px}
-.row-card p{font-size:13px;color:#888;margin-bottom:4px}
+.row-card h4{font-size:15px;font-weight:700;color:#fff;margin-bottom:6px}
+.row-card p{font-size:13px;color:#888;margin-bottom:3px;line-height:1.5}
 .row-card a{color:#4caf50;font-size:13px}
-.row-footer{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.row-footer{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
 .load-rate{font-size:18px;font-weight:800;color:#4caf50}
 .badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px}
 .badge-pending{background:#1a1a0f;color:#ccaa00;border:1px solid #3a3a1d}
+.badge-approved{background:#0f1a0f;color:#4caf50;border:1px solid #1d3a1d}
+.badge-rejected{background:#1a0f0f;color:#cf6679;border:1px solid #3a1d1d}
 .badge-new{background:#1a1a3a;color:#5c5cff;border:1px solid #2d2d6a}
 .badge-claimed{background:#0f1a0f;color:#4caf50;border:1px solid #1d3a1d}
-.msg{padding:12px 16px;border-radius:8px;font-size:14px;margin-bottom:16px;display:none}
-.msg-green{background:#0f1a0f;border:1px solid #1d3a1d;color:#4caf50}
-.msg-red{background:#1a0f0f;border:1px solid #3a1d1d;color:#cf6679}
+.msg{padding:12px 16px;border-radius:8px;font-size:14px;margin-bottom:16px}
+.msg-green{background:#0f1a0f;border:1px solid #1d3a1d;color:#4caf50;display:none}
+.msg-red{background:#1a0f0f;border:1px solid #3a1d1d;color:#cf6679;display:none}
 .empty{color:#555;font-size:14px;text-align:center;padding:24px}
+.wallet-text{font-size:11px;color:#5c5cff;word-break:break-all;margin-top:4px}
 @media(max-width:600px){.form-row{grid-template-columns:1fr}.row-footer{flex-direction:column;align-items:flex-start}}
 </style>
 </head>
@@ -59,7 +64,7 @@ label{font-size:12px;color:#555;font-weight:600;text-transform:uppercase;letter-
   <h2>Enter Admin Password</h2>
   <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')login()"/>
   <button class="btn btn-blue" onclick="login()">Sign In</button>
-  <div class="msg msg-red" id="pw-error" style="display:none;margin-top:8px">Incorrect password.</div>
+  <div class="msg msg-red" id="pw-error" style="margin-top:8px">Incorrect password.</div>
 </div>
 
 <div id="admin-panel">
@@ -71,10 +76,9 @@ label{font-size:12px;color:#555;font-weight:600;text-transform:uppercase;letter-
     <button class="tab-btn" onclick="showTab('claims',this)">🔔 Claims</button>
   </div>
 
-  <!-- Post Load -->
   <div id="tab-loads" class="section">
     <h2>Post a New Load</h2>
-    <p class="section-sub">This posts directly to Browse Loads for carriers to see.</p>
+    <p class="section-sub">Posts directly to Browse Loads for carriers to see.</p>
     <div class="msg msg-green" id="post-success">✓ Load posted!</div>
     <div class="msg msg-red" id="post-error">Error posting load.</div>
     <div class="form-row">
@@ -108,28 +112,24 @@ label{font-size:12px;color:#555;font-weight:600;text-transform:uppercase;letter-
     <button class="btn btn-green" onclick="postLoad()">Post Load</button>
   </div>
 
-  <!-- Active Loads -->
   <div id="tab-active" class="section" style="display:none">
     <h2>Active Loads</h2>
     <p class="section-sub">Currently live on Browse Loads.</p>
     <div id="loads-list"><div class="empty">Loading...</div></div>
   </div>
 
-  <!-- Verifications -->
   <div id="tab-verifications" class="section" style="display:none">
     <h2>Carrier Verifications</h2>
-    <p class="section-sub">Submitted via Get Verified page.</p>
+    <p class="section-sub">Approve a carrier to add them to the public Carriers page.</p>
     <div id="verifications-list"><div class="empty">Loading...</div></div>
   </div>
 
-  <!-- Load Requests -->
   <div id="tab-requests" class="section" style="display:none">
     <h2>Shipper Load Requests</h2>
     <p class="section-sub">Submitted via Post a Load page.</p>
     <div id="requests-list"><div class="empty">Loading...</div></div>
   </div>
 
-  <!-- Claims -->
   <div id="tab-claims" class="section" style="display:none">
     <h2>Load Claims</h2>
     <p class="section-sub">Carriers who claimed loads.</p>
@@ -143,33 +143,33 @@ const SUPABASE_KEY = 'sb_publishable_eGmZP2GZXxt6nnic_xfeKQ_OwjuTl0i';
 const ADMIN_PASSWORD = 'MidnightAdmin2024!';
 
 function login() {
-  if (document.getElementById('pw-input').value === ADMIN_PASSWORD) {
-    document.getElementById('login-box').style.display = 'none';
-    document.getElementById('admin-panel').style.display = 'block';
+  if(document.getElementById('pw-input').value===ADMIN_PASSWORD){
+    document.getElementById('login-box').style.display='none';
+    document.getElementById('admin-panel').style.display='block';
     loadAll();
   } else {
-    document.getElementById('pw-error').style.display = 'block';
+    document.getElementById('pw-error').style.display='block';
   }
 }
 
-function showTab(name, btn) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+function showTab(name,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  ['loads','active','verifications','requests','claims'].forEach(t => {
-    document.getElementById('tab-'+t).style.display = t === name ? 'block' : 'none';
+  ['loads','active','verifications','requests','claims'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display=t===name?'block':'none';
   });
 }
 
-function loadAll() { loadLoads(); loadVerifications(); loadRequests(); loadClaims(); }
+function loadAll(){loadLoads();loadVerifications();loadRequests();loadClaims();}
 
-async function postLoad() {
-  const pickup = document.getElementById('pickup').value.trim();
-  const delivery = document.getElementById('delivery').value.trim();
-  const pickup_date = document.getElementById('pickup_date').value;
-  const equipment = document.getElementById('equipment').value;
-  const rate = document.getElementById('rate').value.trim();
-  if (!pickup||!delivery||!pickup_date||!equipment||!rate) { alert('Fill in pickup, delivery, date, equipment, and rate.'); return; }
-  const resp = await fetch(SUPABASE_URL+'/rest/v1/loads', {
+async function postLoad(){
+  const pickup=document.getElementById('pickup').value.trim();
+  const delivery=document.getElementById('delivery').value.trim();
+  const pickup_date=document.getElementById('pickup_date').value;
+  const equipment=document.getElementById('equipment').value;
+  const rate=document.getElementById('rate').value.trim();
+  if(!pickup||!delivery||!pickup_date||!equipment||!rate){alert('Fill in pickup, delivery, date, equipment, and rate.');return;}
+  const resp=await fetch(SUPABASE_URL+'/rest/v1/loads',{
     method:'POST',
     headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'},
     body:JSON.stringify({pickup,delivery,pickup_date,equipment,rate,weight:document.getElementById('weight').value,commodity:document.getElementById('commodity').value,payment:document.getElementById('payment').value,notes:document.getElementById('notes').value,status:'open'})
@@ -181,13 +181,13 @@ async function postLoad() {
     document.getElementById('equipment').selectedIndex=0;
     document.getElementById('payment').selectedIndex=0;
     loadLoads();
-  } else { document.getElementById('post-error').style.display='block'; }
+  } else {document.getElementById('post-error').style.display='block';}
 }
 
-async function loadLoads() {
-  const resp = await fetch(SUPABASE_URL+'/rest/v1/loads?status=eq.open&order=created_at.desc',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
-  const data = await resp.json();
-  const el = document.getElementById('loads-list');
+async function loadLoads(){
+  const resp=await fetch(SUPABASE_URL+'/rest/v1/loads?status=eq.open&order=created_at.desc',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+  const data=await resp.json();
+  const el=document.getElementById('loads-list');
   if(!data.length){el.innerHTML='<div class="empty">No active loads.</div>';return;}
   el.innerHTML=data.map(l=>`
     <div class="row-card">
@@ -201,68 +201,91 @@ async function loadLoads() {
     </div>`).join('');
 }
 
-async function deleteLoad(id) {
+async function deleteLoad(id){
   if(!confirm('Remove this load?'))return;
   await fetch(SUPABASE_URL+'/rest/v1/loads?id=eq.'+id,{method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
   loadLoads();
 }
 
-async function loadVerifications() {
-  const resp = await fetch(SUPABASE_URL+'/rest/v1/verifications?order=created_at.desc',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
-  const data = await resp.json();
-  const el = document.getElementById('verifications-list');
+async function loadVerifications(){
+  const resp=await fetch(SUPABASE_URL+'/rest/v1/verifications?order=created_at.desc',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+  const data=await resp.json();
+  const el=document.getElementById('verifications-list');
   if(!data.length){el.innerHTML='<div class="empty">No verification requests yet.</div>';return;}
   el.innerHTML=data.map(v=>`
     <div class="row-card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:8px">
         <h4>${v.name||'Unknown'}</h4>
-        <span class="badge badge-${v.status==='pending'?'pending':'claimed'}">${v.status}</span>
+        <span class="badge badge-${v.status||'pending'}">${v.status||'pending'}</span>
       </div>
       <p>${v.email||''} · ${v.phone||''}</p>
-      <p>CDL: ${v.cdl_class||'—'} · DOT/MC: ${v.dot_mc||'—'}</p>
-      <p>Wallet: <span style="color:#5c5cff;font-size:12px">${v.wallet||'—'}</span></p>
+      <p>CDL: <strong style="color:#e0e0e0">${v.cdl_class||'—'}</strong> · DOT/MC: <strong style="color:#e0e0e0">${v.dot_mc||'—'}</strong></p>
       <p>Equipment: ${v.equipment||'—'}</p>
-      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
-        ${v.cdl_link?'<a href="'+v.cdl_link+'" target="_blank">CDL →</a>':''}
-        ${v.insurance_link?'<a href="'+v.insurance_link+'" target="_blank">Insurance →</a>':''}
-        ${v.authority_link?'<a href="'+v.authority_link+'" target="_blank">Authority →</a>':''}
+      ${v.wallet?'<p class="wallet-text">Wallet: '+v.wallet+'</p>':''}
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
+        ${v.cdl_link?'<a href="'+v.cdl_link+'" target="_blank">📄 CDL →</a>':''}
+        ${v.insurance_link?'<a href="'+v.insurance_link+'" target="_blank">📄 Insurance →</a>':''}
+        ${v.authority_link?'<a href="'+v.authority_link+'" target="_blank">📄 Authority →</a>':''}
       </div>
-      <p style="margin-top:6px;font-size:12px;color:#555">Notes: ${v.notes||'—'}</p>
+      ${v.notes?'<p style="margin-top:6px;font-size:12px;color:#555">Notes: '+v.notes+'</p>':''}
+      <div class="row-footer">
+        <span style="font-size:12px;color:#555">${new Date(v.created_at).toLocaleDateString()}</span>
+        <div style="display:flex;gap:8px">
+          ${v.status!=='approved'?'<button class="btn-sm btn-approve" onclick="updateVerification(\''+v.id+'\',\'approved\')">✓ Approve</button>':''}
+          ${v.status!=='rejected'?'<button class="btn-sm btn-reject" onclick="updateVerification(\''+v.id+'\',\'rejected\')">✗ Reject</button>':''}
+        </div>
+      </div>
     </div>`).join('');
 }
 
-async function loadRequests() {
-  const resp = await fetch(SUPABASE_URL+'/rest/v1/load_requests?order=created_at.desc',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
-  const data = await resp.json();
-  const el = document.getElementById('requests-list');
+async function updateVerification(id, status){
+  const action = status==='approved' ? 'approve' : 'reject';
+  if(!confirm('Are you sure you want to '+action+' this carrier?'))return;
+  const resp=await fetch(SUPABASE_URL+'/rest/v1/verifications?id=eq.'+id,{
+    method:'PATCH',
+    headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'},
+    body:JSON.stringify({status})
+  });
+  if(resp.ok){
+    loadVerifications();
+    if(status==='approved') alert('✓ Carrier approved! They now appear on the Carriers page.');
+  } else {
+    alert('Error updating status. Try again.');
+  }
+}
+
+async function loadRequests(){
+  const resp=await fetch(SUPABASE_URL+'/rest/v1/load_requests?order=created_at.desc',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+  const data=await resp.json();
+  const el=document.getElementById('requests-list');
   if(!data.length){el.innerHTML='<div class="empty">No load requests yet.</div>';return;}
   el.innerHTML=data.map(r=>`
     <div class="row-card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:8px">
         <h4>${r.pickup||''} → ${r.delivery||''}</h4>
         <span class="badge badge-new">${r.status}</span>
       </div>
       <p>${r.equipment||''} · ${r.weight||''} · Pickup: ${r.pickup_date||''}</p>
       <p>Commodity: ${r.commodity||'—'} · Rate: ${r.rate||'—'} · Payment: ${r.payment||'—'}</p>
-      <p>From: ${r.name||''} · ${r.email||''}</p>
-      <p style="font-size:12px;color:#555">Notes: ${r.notes||'—'}</p>
+      <p>From: <strong style="color:#e0e0e0">${r.name||''}</strong> · ${r.email||''}</p>
+      ${r.notes?'<p style="font-size:12px;color:#555;margin-top:4px">Notes: '+r.notes+'</p>':''}
     </div>`).join('');
 }
 
-async function loadClaims() {
-  const resp = await fetch(SUPABASE_URL+'/rest/v1/claims?order=created_at.desc',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
-  const data = await resp.json();
-  const el = document.getElementById('claims-list');
+async function loadClaims(){
+  const resp=await fetch(SUPABASE_URL+'/rest/v1/claims?order=created_at.desc',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+  const data=await resp.json();
+  const el=document.getElementById('claims-list');
   if(!data.length){el.innerHTML='<div class="empty">No claims yet.</div>';return;}
   el.innerHTML=data.map(c=>`
     <div class="row-card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:8px">
         <h4>${c.route||'Load claimed'}</h4>
         <span class="badge badge-claimed">Claimed</span>
       </div>
-      <p>Rate: ${c.rate||'—'} · TCT Verified: ${c.tct_verified||'—'}</p>
-      <p>Wallet: <span style="color:#5c5cff;font-size:12px">${c.wallet||'—'}</span></p>
-      <p style="font-size:12px;color:#555">Load ID: ${c.load_id||'—'}</p>
+      <p>Rate: <strong style="color:#4caf50">${c.rate||'—'}</strong> · TCT Verified: ${c.tct_verified||'—'}</p>
+      ${c.wallet?'<p class="wallet-text">Carrier Wallet: '+c.wallet+'</p>':''}
+      <p style="font-size:12px;color:#555;margin-top:4px">${new Date(c.created_at).toLocaleDateString()}</p>
     </div>`).join('');
 }
 </script>

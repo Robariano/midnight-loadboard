@@ -10,9 +10,9 @@
     "ci": "npm run typecheck && npm run lint && npm run build",
     "lint": "eslint src",
     "prepack": "npm run build",
-    "standalone": "node --max-old-space-size=4096 --experimental-specifier-resolution=node --loader ts-node/esm src/launcher/standalone.ts",
-    "preview-remote": "node --max-old-space-size=4096 --experimental-specifier-resolution=node --loader ts-node/esm src/launcher/preview.ts",
-    "preprod-remote": "node --max-old-space-size=4096 --experimental-specifier-resolution=node --loader ts-node/esm src/launcher/preprod.ts",
+    "standalone": "node --max-old-space-size=12288 --experimental-specifier-resolution=node --loader ts-node/esm src/launcher/standalone.ts",
+    "preview-remote": "node --max-old-space-size=12288 --experimental-specifier-resolution=node --loader ts-node/esm src/launcher/preview.ts",
+    "preprod-remote": "node --max-old-space-size=12288 --experimental-specifier-resolution=node --loader ts-node/esm src/launcher/preprod.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
