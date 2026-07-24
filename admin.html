@@ -336,22 +336,54 @@ async function updateVerification(id, status){
   }
 }
 
+let allLoadRequests = [];
+
 async function loadRequests(){
   const resp=await fetch(SUPABASE_URL+'/rest/v1/load_requests?order=created_at.desc',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
   const data=await resp.json();
+  allLoadRequests = data;
   const el=document.getElementById('requests-list');
   if(!data.length){el.innerHTML='<div class="empty">No load requests yet.</div>';return;}
   el.innerHTML=data.map(r=>`
     <div class="row-card">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:8px">
         <h4>${r.pickup||''} → ${r.delivery||''}</h4>
-        <span class="badge badge-new">${r.status}</span>
+        <span class="badge ${r.status==='published'?'badge-approved':'badge-new'}">${r.status}</span>
       </div>
       <p>${r.equipment||''} · ${r.weight||''} · Pickup: ${r.pickup_date||''}</p>
       <p>Commodity: ${r.commodity||'—'} · Rate: ${r.rate||'—'} · Payment: ${r.payment||'—'}</p>
       <p>From: <strong style="color:#e0e0e0">${r.name||''}</strong> · ${r.email||''}</p>
       ${r.notes?'<p style="font-size:12px;color:#555;margin-top:4px">Notes: '+r.notes+'</p>':''}
+      <div class="row-footer">
+        <span></span>
+        ${r.status==='published'
+          ? '<span style="font-size:12px;color:#4caf50">✓ Live on Browse Loads</span>'
+          : '<button class="btn-sm btn-approve" onclick="publishLoadRequest(\''+r.id+'\')">Publish to Board →</button>'}
+      </div>
     </div>`).join('');
+}
+
+async function publishLoadRequest(id){
+  const r = allLoadRequests.find(x => x.id === id);
+  if(!r) return;
+  if(!confirm('Publish '+(r.pickup||'')+' → '+(r.delivery||'')+' to Browse Loads?')) return;
+  const resp = await fetch(SUPABASE_URL+'/rest/v1/loads', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'},
+    body: JSON.stringify({
+      pickup: r.pickup, delivery: r.delivery, pickup_date: r.pickup_date, equipment: r.equipment,
+      weight: r.weight, commodity: r.commodity, rate: r.rate, payment: r.payment, notes: r.notes,
+      status: 'open'
+    })
+  });
+  if(!resp.ok){ alert('Error publishing load. Try again.'); return; }
+  await fetch(SUPABASE_URL+'/rest/v1/load_requests?id=eq.'+id, {
+    method: 'PATCH',
+    headers: {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'},
+    body: JSON.stringify({ status: 'published' })
+  });
+  loadRequests();
+  loadLoads();
 }
 
 async function loadClaims(){
@@ -363,12 +395,31 @@ async function loadClaims(){
     <div class="row-card">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:8px">
         <h4>${c.route||'Load claimed'}</h4>
-        <span class="badge badge-claimed">Claimed</span>
+        <span class="badge ${c.delivered_at?'badge-approved':'badge-claimed'}">${c.delivered_at?'Delivered':'Claimed'}</span>
       </div>
       <p>Rate: <strong style="color:#4caf50">${c.rate||'—'}</strong></p>
-      ${c.name?'<p>Claimed by: '+c.name+(c.email?' · '+c.email:'')+'</p>':''}
+      ${c.carrier_name?'<p>Claimed by: '+c.carrier_name+(c.carrier_email?' · '+c.carrier_email:'')+'</p>':''}
+      ${c.pod_link?'<p><a href="'+c.pod_link+'" target="_blank">📄 Proof of Delivery →</a></p>':''}
       <p style="font-size:12px;color:#555;margin-top:4px">${new Date(c.created_at).toLocaleDateString()}</p>
+      <div class="row-footer">
+        <span></span>
+        ${c.delivered_at
+          ? '<span style="font-size:12px;color:#4caf50">✓ Delivered ' + new Date(c.delivered_at).toLocaleDateString() + '</span>'
+          : '<button class="btn-sm btn-approve" onclick="markDelivered(\''+c.id+'\')">Mark Delivered →</button>'}
+      </div>
     </div>`).join('');
+}
+
+async function markDelivered(id){
+  const podLink = prompt('Paste the proof-of-delivery link (BOL, delivery photo, receipt, etc.) — or leave blank if you don\'t have one yet:');
+  if(podLink === null) return; // cancelled
+  const resp = await fetch(SUPABASE_URL+'/rest/v1/claims?id=eq.'+id, {
+    method: 'PATCH',
+    headers: {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'},
+    body: JSON.stringify({ delivered_at: new Date().toISOString(), pod_link: podLink || null })
+  });
+  if(!resp.ok){ alert('Error marking delivered. Try again.'); return; }
+  loadClaims();
 }
 </script>
 </body>

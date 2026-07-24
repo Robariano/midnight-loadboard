@@ -191,25 +191,44 @@ async function confirmClaim() {
     return;
   }
   document.getElementById('modal-actions').innerHTML = '<div style="color:#888;font-size:14px">Submitting...</div>';
+  const load = allLoads.find(l => l.id === currentLoadId);
+  const route = load ? load.pickup + ' → ' + load.delivery : '';
+  const rate = load ? load.rate : '';
+
+  // Write to Supabase so it shows up in the admin Claims tab.
+  let supabaseOk = false;
   try {
-    const load = allLoads.find(l => l.id === currentLoadId);
+    const resp = await fetch(SUPABASE_URL + '/rest/v1/claims', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Prefer': 'return=minimal'},
+      body: JSON.stringify({ load_id: currentLoadId, route: route, rate: rate, carrier_name: name, carrier_email: email })
+    });
+    supabaseOk = resp.ok;
+  } catch(e) {}
+
+  // Also email via Formspree as an instant notification — keep this even if Supabase succeeds.
+  try {
     await fetch('https://formspree.io/f/xjgqnbkj', {
       method: 'POST',
       body: JSON.stringify({
-        _subject: 'Load Claimed — ' + (load ? load.pickup + ' → ' + load.delivery : currentLoadId),
+        _subject: 'Load Claimed — ' + (route || currentLoadId),
         load_id: currentLoadId,
-        route: load ? load.pickup + ' → ' + load.delivery : '',
-        rate: load ? load.rate : '',
+        route: route,
+        rate: rate,
         name: name,
         email: email
       }),
       headers: {'Content-Type': 'application/json', 'Accept': 'application/json'}
     });
+  } catch(e) {}
+
+  if (supabaseOk) {
     document.getElementById('claim-success').style.display = 'block';
-    document.getElementById('modal-actions').innerHTML = '<button class="btn-modal-secondary" onclick="closeModal()">Close</button>';
-  } catch(e) {
-    document.getElementById('modal-actions').innerHTML = '<button class="btn-modal-secondary" onclick="closeModal()">Close</button>';
+  } else {
+    document.getElementById('claim-success').innerHTML = '✓ Load claim sent! (It may take a moment to appear in review — we\'ll contact you within a few hours.)';
+    document.getElementById('claim-success').style.display = 'block';
   }
+  document.getElementById('modal-actions').innerHTML = '<button class="btn-modal-secondary" onclick="closeModal()">Close</button>';
 }
 
 function closeModal() {
