@@ -59,9 +59,9 @@ label{font-size:12px;color:#555;font-weight:600;text-transform:uppercase;letter-
   </div>
 </header>
 <div class="page-hero">
-  <div class="page-badge">TCT Verified Carrier Program</div>
+  <div class="page-badge">Verified Carrier Program</div>
   <h2>Get Your Carrier Credential</h2>
-  <p>Submit your documents below to join the Midnight Loadboard verified carrier network. Once approved, you'll receive a Trucker Credential Token (TCT) — a permanent digital credential on the Cardano blockchain.</p>
+  <p>Submit your documents below to join the Midnight Loadboard verified carrier network. Once approved, you'll receive a permanent verified carrier credential shippers can trust.</p>
   <p class="highlight-green">Verification is free. No fees. No subscriptions.</p>
 </div>
 <div class="page-content">
@@ -71,8 +71,7 @@ label{font-size:12px;color:#555;font-weight:600;text-transform:uppercase;letter-
   </div>
   <div class="steps-card">
     <div class="step"><div class="step-num">1</div><div class="step-body"><h4>Submit Your Documents</h4><p>Fill out the form below. We'll review everything within 24–48 hours.</p></div></div>
-    <div class="step"><div class="step-num">2</div><div class="step-body"><h4>Set Up Your Cardano Wallet</h4><p>Download <a href="https://gamechanger.finance" target="_blank">GameChanger Wallet</a> (free). You'll need a wallet address to receive your TCT.</p></div></div>
-    <div class="step"><div class="step-num">3</div><div class="step-body"><h4>Receive Your TCT</h4><p>Once approved, we mint your Trucker Credential Token and send it to your wallet. It's permanent and yours forever.</p></div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body"><h4>Get Verified</h4><p>Once approved, you're added to our verified carrier network. It's permanent and stays with you.</p></div></div>
   </div>
   <div class="form-card">
     <h3>Submit Your Documents</h3>
@@ -93,8 +92,6 @@ label{font-size:12px;color:#555;font-weight:600;text-transform:uppercase;letter-
       </div>
       <label>DOT / MC Number</label>
       <input type="text" id="v-dot" placeholder="DOT # and/or MC #"/>
-      <label>Cardano Wallet Address</label>
-      <input type="text" id="v-wallet" placeholder="addr1... (your GameChanger or other Cardano wallet address)"/>
       <label>Link to CDL</label>
       <input type="url" id="v-cdl-link" placeholder="https://..."/>
       <label>Link to Insurance Certificate</label>
@@ -125,7 +122,6 @@ document.getElementById('verify-form').addEventListener('submit', async function
     phone: document.getElementById('v-phone').value,
     cdl_class: document.getElementById('v-cdl').value,
     dot_mc: document.getElementById('v-dot').value,
-    wallet: document.getElementById('v-wallet').value,
     cdl_link: document.getElementById('v-cdl-link').value,
     insurance_link: document.getElementById('v-insurance').value,
     authority_link: document.getElementById('v-authority').value,
