@@ -1,1 +1,506 @@
-404: Not Found
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Midnight Loadboard</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0a0a12;color:#e0e0e0;font-family:Helvetica,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+  header{width:100%;background:#12121e;border-bottom:1px solid #2a2a3e;padding:16px 32px;display:flex;align-items:center;gap:12px}
+  header h1{font-size:20px;font-weight:700;color:#fff;letter-spacing:0.5px}
+  .header-nav{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .header-verify{font-size:12px;font-weight:700;color:#4caf50;text-decoration:none;border:1px solid #4caf50;border-radius:6px;padding:5px 12px}
+  .header-verify:hover{background:#0f1a0f}
+  .header-post{font-size:12px;font-weight:700;color:#5c5cff;text-decoration:none;border:1px solid #5c5cff;border-radius:6px;padding:5px 12px}
+  .header-post:hover{background:#1a1a3a}
+  .header-registry{font-size:12px;font-weight:700;color:#888;text-decoration:none;border:1px solid #2a2a3e;border-radius:6px;padding:5px 12px}
+  .header-registry:hover{background:#1a1a2e;color:#e0e0e0}
+  .network-toggle{display:flex;gap:0;margin-left:auto;border:1px solid #2a2a3e;border-radius:6px;overflow:hidden}
+  .net-btn{background:#12121e;color:#555;font-size:12px;font-weight:600;padding:5px 14px;cursor:pointer;border:none;transition:all 0.15s}
+  .net-btn.active{background:#1e1e3a;color:#8888cc}
+  #connect-section{margin-top:48px;text-align:center;max-width:480px;padding:0 24px}
+  #connect-section h2{font-size:28px;font-weight:700;margin-bottom:12px;color:#fff}
+  #connect-section p{color:#888;font-size:15px;line-height:1.6;margin-bottom:32px}
+  button{cursor:pointer;border:none;border-radius:8px;font-size:15px;font-weight:600;padding:12px 28px;transition:all 0.15s}
+  #btn-connect{background:#5c5cff;color:#fff}
+  #btn-connect:hover{background:#7070ff}
+  #btn-connect:disabled{background:#333;color:#666;cursor:not-allowed}
+  #status{margin-top:20px;font-size:13px;color:#666;min-height:20px}
+  #dashboard{display:none;width:100%;max-width:960px;padding:32px 24px}
+  .dash-header{display:flex;align-items:center;gap:16px;margin-bottom:32px}
+  .dash-header h2{font-size:24px;font-weight:700;color:#fff}
+  .role-badge{font-size:12px;font-weight:700;border-radius:20px;padding:4px 14px}
+  .role-trucker{background:#1a3a1a;color:#4caf50;border:1px solid #2d6a2d}
+  .role-broker{background:#1a1a3a;color:#5c5cff;border:1px solid #2d2d6a}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+  .card{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:24px}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:8px;color:#fff}
+  .card p{font-size:13px;color:#888;line-height:1.5;margin-bottom:16px}
+  .card-btn{display:inline-block;font-size:13px;font-weight:600;color:#5c5cff;text-decoration:none;cursor:pointer;background:none;border:1px solid #5c5cff;border-radius:6px;padding:6px 14px}
+  .card-btn:hover{background:#1a1a3a}
+  .wallet-info{font-size:12px;color:#555;margin-top:8px}
+  .cred-info{font-size:12px;background:#0f1a0f;border:1px solid #1d3a1d;border-radius:6px;padding:10px 14px;color:#4caf50;margin-top:16px;word-break:break-all}
+  .no-cred{font-size:12px;background:#1a0f0f;border:1px solid #3a1d1d;border-radius:6px;padding:10px 14px;color:#cf6679;margin-top:16px}
+  .section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#555;margin-bottom:12px}
+
+  @media(max-width:600px){
+    header{padding:12px 16px;flex-wrap:wrap;gap:8px}
+    header h1{font-size:16px}
+    .net-btn{font-size:11px;padding:4px 10px}
+    #connect-section{margin-top:40px;padding:0 16px}
+    #connect-section h2{font-size:22px}
+    #connect-section p{font-size:14px}
+    #dashboard{padding:16px}
+    .cards{grid-template-columns:1fr}
+    .card{padding:16px}
+    #btn-connect{width:100%;font-size:14px}
+    #btn-demo{width:100%;font-size:14px;margin-top:12px}
+  }
+  #btn-demo{background:transparent;color:#5c5cff;border:1px solid #5c5cff;border-radius:8px;font-size:15px;font-weight:600;padding:12px 28px;cursor:pointer;margin-top:12px}
+  #btn-demo:hover{background:#1a1a3a}
+  #btn-gamechanger{background:transparent;color:#4caf50;border:1px solid #4caf50;border-radius:8px;font-size:14px;font-weight:600;padding:10px 24px;cursor:pointer;margin-top:12px;display:block;margin-left:auto;margin-right:auto}
+  #btn-gamechanger:hover{background:#0f1a0f}
+  #btn-qrconnect{background:transparent;color:#8888cc;border:1px solid #3a3a6a;border-radius:8px;font-size:14px;font-weight:600;padding:10px 24px;cursor:pointer;margin-top:12px;display:block;margin-left:auto;margin-right:auto}
+  #btn-qrconnect:hover{background:#1a1a3a}
+  .demo-banner{background:#1a1a2a;border:1px solid #3a3a6a;border-radius:8px;padding:10px 16px;font-size:12px;color:#8888cc;margin-bottom:20px;text-align:center}
+
+  /* Hero */
+  .hero{width:100%;max-width:900px;padding:64px 24px 40px;text-align:center}
+  .hero-badge{display:inline-block;background:#1a1a2a;border:1px solid #5c5cff;border-radius:20px;padding:6px 18px;font-size:12px;font-weight:700;color:#5c5cff;margin-bottom:20px;letter-spacing:0.5px}
+  .hero h2{font-size:38px;font-weight:800;color:#fff;margin-bottom:14px;line-height:1.2}
+  .hero p{color:#888;font-size:16px;line-height:1.7;max-width:560px;margin:0 auto 36px}
+  .hero-actions{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  .hero-btn-primary{background:#5c5cff;color:#fff;font-size:15px;font-weight:700;padding:13px 28px;border-radius:8px;text-decoration:none;border:none;cursor:pointer}
+  .hero-btn-primary:hover{background:#7070ff}
+  .hero-btn-secondary{background:transparent;color:#4caf50;font-size:15px;font-weight:700;padding:13px 28px;border-radius:8px;text-decoration:none;border:1px solid #4caf50}
+  .hero-btn-secondary:hover{background:#0f1a0f}
+  .feature-strip{width:100%;max-width:900px;padding:0 24px 48px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .feat-card{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:24px;text-align:left}
+  .feat-card h3{font-size:15px;font-weight:700;color:#fff;margin-bottom:8px}
+  .feat-card p{font-size:13px;color:#888;line-height:1.6;margin-bottom:16px}
+  .feat-link{display:inline-block;font-size:13px;font-weight:700;text-decoration:none;border-radius:6px;padding:7px 16px}
+  .feat-link-blue{color:#5c5cff;border:1px solid #5c5cff}
+  .feat-link-blue:hover{background:#1a1a3a}
+  .feat-link-green{color:#4caf50;border:1px solid #4caf50}
+  .feat-link-green:hover{background:#0f1a0f}
+  .feat-link-gray{color:#888;border:1px solid #2a2a3e}
+  .feat-link-gray:hover{background:#1a1a2e;color:#e0e0e0}
+  .section-divider{width:100%;max-width:900px;border:none;border-top:1px solid #1a1a2e;margin:0 0 0}
+  @media(max-width:700px){
+    .hero{padding:40px 16px 28px}
+    .hero h2{font-size:26px}
+    .hero p{font-size:14px}
+    .feature-strip{grid-template-columns:1fr;padding:0 16px 32px}
+    .feature-strip[style]{grid-template-columns:1fr!important}
+  }
+
+  /* Waitlist */
+  #waitlist-section{width:100%;max-width:480px;padding:48px 24px 32px;text-align:center}
+  #waitlist-section h2{font-size:22px;font-weight:700;color:#fff;margin-bottom:8px}
+  #waitlist-section p{color:#888;font-size:14px;line-height:1.6;margin-bottom:24px}
+  .waitlist-form{display:flex;flex-direction:column;gap:12px;text-align:left}
+  .waitlist-form input,.waitlist-form select{background:#12121e;border:1px solid #2a2a3e;border-radius:8px;color:#e0e0e0;font-size:14px;padding:11px 14px;width:100%;outline:none}
+  .waitlist-form input:focus,.waitlist-form select:focus{border-color:#5c5cff}
+  .waitlist-form select option{background:#12121e}
+  #btn-waitlist{background:#5c5cff;color:#fff;width:100%;font-size:15px;font-weight:700;padding:13px;border-radius:8px;border:none;cursor:pointer;margin-top:4px}
+  #btn-waitlist:hover{background:#7070ff}
+  #waitlist-thanks{display:none;background:#0f1a0f;border:1px solid #1d3a1d;border-radius:8px;padding:16px;color:#4caf50;font-size:14px;margin-top:8px}
+  .divider{width:100%;max-width:480px;border:none;border-top:1px solid #1a1a2e;margin:0}
+  @media(max-width:600px){#waitlist-section{padding:32px 16px 24px}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@gamechanger-finance/gc/dist/browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fabianbormann/cardano-peer-connect/dist/index.js"></script>
+</head>
+<body>
+<header>
+  <h1>Midnight Loadboard</h1>
+  <div class="header-nav">
+    <a href="loads.html" class="header-registry">Browse Loads</a>
+    <a href="document-vault.html" class="header-registry">Document Vault</a>
+    <a href="about-founder.html" class="header-registry">About</a>
+    <a href="carriers.html" class="header-registry">Carriers</a>
+    <a href="revoked-credentials.html" class="header-registry" style="color:#cf6679;border:1px solid #3a1d1d;">Revoked</a>
+    <a href="post-a-load.html" class="header-post">Post a Load</a>
+    <a href="get-verified.html" class="header-verify">✓ Get Verified</a>
+  </div>
+  <div class="network-toggle">
+    <button class="net-btn" id="btn-preprod" onclick="setNetwork('preprod')">Preprod</button>
+    <button class="net-btn active" id="btn-mainnet" onclick="setNetwork('mainnet')">Mainnet</button>
+  </div>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">Never Lose a BOL Again</div>
+  <h2>Stop Losing Paperwork.<br/>Start Getting Paid.</h2>
+  <p>Every BOL, delivery receipt, and inspection report — permanently stored, tamper-proof, and yours forever. Built into a full freight network where every carrier holds a verified Trucker Credential Token (TCT) on the Cardano blockchain.</p>
+  <div class="hero-actions">
+    <a href="document-vault.html" class="hero-btn-primary">See Document Vault</a>
+    <a href="get-verified.html" class="hero-btn-secondary">✓ Get Verified as a Carrier</a>
+  </div>
+  <p style="margin-top:16px;font-size:13px;color:#666;">Just got your authority? <a href="get-verified.html" style="color:#4caf50;font-weight:600;">See why that's not a problem here →</a></p>
+</div>
+
+<!-- FEATURE CARDS -->
+<div class="feature-strip" style="grid-template-columns:repeat(4,1fr)">
+  <div class="feat-card">
+    <h3>🔒 Document Vault</h3>
+    <p>Never lose a BOL or receipt again. Permanently store your documents, tamper-proof, in your own wallet.</p>
+    <a href="document-vault.html" class="feat-link feat-link-blue">See How It Works →</a>
+  </div>
+  <div class="feat-card">
+    <h3>📋 Post a Load</h3>
+    <p>Submit your freight details and get matched with a verified carrier. Rate confirmation sent before anything moves. Net 7 payment terms.</p>
+    <a href="post-a-load.html" class="feat-link feat-link-gray">Post a Load →</a>
+  </div>
+  <div class="feat-card">
+    <h3>✓ Verified Carrier Network</h3>
+    <p>Every carrier in our network holds a Trucker Credential Token — a permanent blockchain record of their CDL, insurance, and FMCSA authority.</p>
+    <a href="carriers.html" class="feat-link feat-link-gray">View Carriers →</a>
+  </div>
+  <div class="feat-card">
+    <h3>🚛 Get Verified</h3>
+    <p>Carriers — submit your documents, set up your Cardano wallet, and receive your TCT credential. Free to join. Net 7 payment terms, no factoring companies.</p>
+    <a href="get-verified.html" class="feat-link feat-link-green">Get Verified →</a>
+  </div>
+</div>
+
+<hr class="section-divider"/>
+
+<!-- WALLET CONNECT -->
+<div id="connect-section">
+  <h2>Connect Your Wallet</h2>
+  <p>Connect your Cardano wallet to access the loadboard. TCT holders are routed to the Trucker Dashboard automatically.</p>
+  <p style="font-size:12px;color:#666;margin-bottom:24px;">On your phone or iPad? Open this site inside your wallet app's own browser (Eternl, Vespr, and Yoroi all support this) instead of Safari or Chrome for the connection to work.</p>
+  <button id="btn-connect" onclick="connectWallet()">Connect Wallet</button>
+  <div id="status"></div>
+  <button id="btn-gamechanger" onclick="connectGameChanger()">Connect with GameChanger Wallet</button>
+  <div id="gc-note" style="font-size:11px;color:#555;margin-top:8px;max-width:400px;margin-left:auto;margin-right:auto;">GameChanger connections currently verify your address only — automatic TCT detection for GameChanger is coming soon.</div>
+  <div style="font-size:11px;color:#8888cc;margin-top:6px;max-width:400px;margin-left:auto;margin-right:auto;background:#12121e;border:1px solid #2a2a3e;border-radius:6px;padding:8px 12px;">✓ Approved in GameChanger? Since we're still early and reviewing every carrier personally right now, just email your wallet address to <strong style="color:#5c5cff;">robertariano@gmail.com</strong> and we'll finish verification by hand — same as everyone else joining right now.</div>
+  <button id="btn-qrconnect" onclick="openQRConnect()">Connect via QR Code (Mobile Wallet)</button>
+  <div id="qr-note" style="font-size:11px;color:#555;margin-top:8px;max-width:400px;margin-left:auto;margin-right:auto;">Experimental — scan with a CIP-45 compatible mobile wallet. Not all wallets support this yet.</div>
+  <div id="qr-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;">
+    <div style="background:#12121e;border:1px solid #2a2a3e;border-radius:14px;padding:32px;max-width:340px;text-align:center;">
+      <h3 style="color:#fff;font-size:16px;margin-bottom:12px;">Scan With Your Mobile Wallet</h3>
+      <div id="qr-code-container" style="background:#fff;border-radius:8px;padding:12px;display:inline-block;margin-bottom:16px;"></div>
+      <div id="qr-status" style="font-size:12px;color:#888;margin-bottom:16px;">Waiting for wallet to connect…</div>
+      <button onclick="closeQRConnect()" style="background:transparent;border:1px solid #2a2a3e;color:#888;padding:8px 20px;border-radius:6px;font-size:13px;">Cancel</button>
+    </div>
+  </div>
+<button id="btn-demo" onclick="showDemo()">Preview Demo (No Wallet)</button>
+</div>
+
+<hr class="divider"/>
+<div id="waitlist-section">
+  <h2>Join the Waitlist</h2>
+  <p>Be first to access Midnight Loadboard. Verified carriers get Net 7 payment terms on delivery — no NET30, no factoring companies.</p>
+  <form class="waitlist-form" id="waitlist-form" action="https://formspree.io/f/xjgqnbkj" method="POST">
+    <input type="text" name="name" placeholder="Full Name" required/>
+    <input type="email" name="email" placeholder="Email Address" required/>
+    <select name="role" required>
+      <option value="" disabled selected>Are you a Carrier or Shipper?</option>
+      <option value="carrier">Carrier / Driver</option>
+      <option value="shipper">Shipper / Broker</option>
+    </select>
+    <select name="cdl" id="cdl-select">
+      <option value="" disabled selected>CDL Class (carriers only)</option>
+      <option value="Class A">CDL Class A</option>
+      <option value="Class B">CDL Class B</option>
+      <option value="Class C">CDL Class C</option>
+      <option value="No CDL">No CDL / Shipper</option>
+    </select>
+    <button type="submit" id="btn-waitlist">Join Waitlist</button>
+  </form>
+  <div id="waitlist-thanks">✓ You're on the list! We'll be in touch as the platform launches.</div>
+</div>
+<hr class="divider"/>
+
+<div id="dashboard">
+  <div class="dash-header">
+    <h2 id="dash-title">Dashboard</h2>
+    <span id="role-badge" class="role-badge"></span>
+  </div>
+  <div id="wallet-info" class="wallet-info"></div>
+  <div id="cred-info"></div>
+  <div style="height:24px"></div>
+  <div class="section-title">Actions</div>
+  <div id="cards" class="cards"></div>
+</div>
+
+<script>
+const POLICIES = {
+  mainnet: '31dff13b553a6214cbcc1aa93884fd4351700b6b4da3bd63894cbf5c',
+  preprod: '4dad78ae2dd5e2d4db3f6e43d897b8df00e50f20c69d8475551dfbcb'
+};
+
+// Preferred wallet order — known CIP-30 wallets first
+const WALLET_PRIORITY = ['eternl','lace','nami','flint','typhon','gerowallet','vespr','yoroi'];
+
+let currentNetwork = 'mainnet';
+
+function setNetwork(net) {
+  currentNetwork = net;
+  document.getElementById('btn-mainnet').classList.toggle('active', net==='mainnet');
+  document.getElementById('btn-preprod').classList.toggle('active', net==='preprod');
+  document.getElementById('connect-section').style.display='block';
+  document.getElementById('dashboard').style.display='none';
+  document.getElementById('status').textContent='';
+  document.getElementById('btn-connect').disabled=false;
+}
+
+const TRUCKER_CARDS = [
+  {title:'🚛 Open Loads',desc:'Browse and claim available loads. Your TCT credential allows you to bid on carrier-gated loads.',action:'View Loads'},
+  {title:'📦 My Deliveries',desc:'Track your active and completed deliveries. View payment status and delivery confirmations.',action:'View Deliveries'},
+  {title:'⭐ Reputation',desc:'Your on-chain carrier score and delivery history. Build your reputation to unlock higher-value loads.',action:'View Score'},
+  {title:'My TCT Credential',desc:'Your Trucker Credential Token (TCT) is active on Cardano mainnet. Click to view your token on the blockchain explorer.',action:'View Token',link:'https://cardanoscan.io/token/31dff13b553a6214cbcc1aa93884fd4351700b6b4da3bd63894cbf5c544354'}
+];
+
+const BROKER_CARDS = [
+  {title:'📋 Post a Load',desc:'Create a new load listing. Set your rate, route, and requirements. Only credentialed carriers can claim.',action:'Post Load'},
+  {title:'📊 My Loads',desc:'Manage your active listings, reveal bids, and confirm delivery for loads you have posted.',action:'Manage Loads'},
+  {title:'📁 Carrier Registry',desc:'Browse verified carriers in the network. All carriers hold a valid Trucker Credential Token.',action:'View Registry'},
+  {title:'🔑 Get Credentials',desc:"You don't have a Trucker Credential Token. Mint one to access carrier-gated loads on the network.",action:'Mint TCT',link:'mint.html'}
+];
+
+function setStatus(msg,color){const el=document.getElementById('status');el.textContent=msg;el.style.color=color||'#666';}
+
+function pickWallet() {
+  const cardano = window.cardano;
+  if (!cardano) return null;
+  // Try known wallets in priority order
+  for (const name of WALLET_PRIORITY) {
+    if (cardano[name] && typeof cardano[name].enable === 'function') return name;
+  }
+  // Fall back to any key with enable() that isn't 'app' or single-char names
+  return Object.keys(cardano).find(k => k.length > 3 && cardano[k] && typeof cardano[k].enable === 'function') || null;
+}
+
+async function connectWallet(){
+  const btn=document.getElementById('btn-connect');
+  btn.disabled=true;
+  setStatus('Looking for wallet…');
+  const cardano=window.cardano;
+  if(!cardano){setStatus('No Cardano wallet found. Please install Lace or Eternl.','#cf6679');btn.disabled=false;return;}
+  const walletKey = pickWallet();
+  if(!walletKey){setStatus('No supported wallet found.','#cf6679');btn.disabled=false;return;}
+  setStatus('Connecting to '+walletKey+'…');
+  let api;
+  try{api=await cardano[walletKey].enable();}
+  catch(e){setStatus('Connection rejected.','#cf6679');btn.disabled=false;return;}
+  setStatus('Checking credentials…');
+  const policy=POLICIES[currentNetwork];
+  let addrDisplay='';
+  try{const addrs=await api.getUsedAddresses();if(addrs&&addrs.length>0){const hex=addrs[0];addrDisplay=hex.substring(0,12)+'…'+hex.substring(hex.length-8);}}catch(e){}
+  let hasTCT=false;
+  try{
+    const utxos=await api.getUtxos();
+    if(utxos&&utxos.length>0){
+      for(const u of utxos){
+        const s=typeof u==='string'?u:JSON.stringify(u);
+        if(s.includes(policy)){hasTCT=true;break;}
+      }
+    }
+    try{const bal=await api.getBalance();if(bal&&bal.includes&&bal.includes(policy))hasTCT=true;}catch(e){}
+  }catch(e){setStatus('Could not read UTxOs: '+e.message,'#cf6679');}
+  showDashboard(hasTCT,addrDisplay,walletKey,policy);
+}
+
+function showDashboard(hasTCT,addrDisplay,walletName,policy){
+  document.getElementById('connect-section').style.display='none';
+  document.getElementById('dashboard').style.display='block';
+  document.getElementById('dash-title').textContent=hasTCT?'Trucker Dashboard':'Broker Dashboard';
+  const badge=document.getElementById('role-badge');
+  badge.textContent=hasTCT?'TCT Verified Carrier':'Broker / Shipper';
+  badge.className='role-badge '+(hasTCT?'role-trucker':'role-broker');
+  if(addrDisplay)document.getElementById('wallet-info').textContent=walletName+' · '+addrDisplay+' · '+currentNetwork;
+  const credEl=document.getElementById('cred-info');
+  credEl.innerHTML=hasTCT
+    ?'<div class="cred-info">✓ TCT Active · Policy: '+policy+'</div>'
+    :'<div class="no-cred">✗ No TCT found · Policy: '+policy+'</div>';
+  const cards=hasTCT?TRUCKER_CARDS:BROKER_CARDS;
+  document.getElementById('cards').innerHTML=cards.map(function(c){var btn;if(c.link&&c.link.indexOf('http')===0){btn='<button class="card-btn" onclick="window.open(\''+c.link+'\',\'_blank\')">'+c.action+'</button>';}else if(c.link){btn='<button class="card-btn" onclick="location.href=\''+c.link+'\'">'+c.action+'</button>';}else{btn='<button class="card-btn">'+c.action+'</button>';}return '<div class="card"><h3>'+c.title+'</h3><p>'+c.desc+'</p>'+btn+'</div>';}).join('');
+}
+
+// Waitlist form handler
+document.getElementById('waitlist-form').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const btn = document.getElementById('btn-waitlist');
+  btn.textContent = 'Submitting…';
+  btn.disabled = true;
+  try {
+    const resp = await fetch(this.action, {method:'POST', body: new FormData(this), headers:{Accept:'application/json'}});
+    if(resp.ok){
+      this.style.display='none';
+      document.getElementById('waitlist-thanks').style.display='block';
+    } else {
+      btn.textContent = 'Try Again';
+      btn.disabled = false;
+    }
+  } catch(e){
+    btn.textContent = 'Try Again';
+    btn.disabled = false;
+  }
+});
+
+function showDemo(){
+  showDashboard(true,'demo...wallet','demo','31dff13b553a6214cbcc1aa93884fd4351700b6b4da3bd63894cbf5c');
+  document.getElementById('cred-info').innerHTML='<div class="demo-banner">DEMO MODE — Connect a real wallet to verify your TCT</div>';
+  document.getElementById('wallet-info').textContent='Demo Mode - mainnet';
+}
+
+// ---- Mobile QR WalletConnect (CIP-45 peer connect) ----
+let dAppConnect = null;
+
+function openQRConnect() {
+  document.getElementById('qr-modal').style.display = 'flex';
+  document.getElementById('qr-status').textContent = 'Generating QR code…';
+
+  if (typeof CardanoPeerConnect === 'undefined') {
+    document.getElementById('qr-status').textContent = 'QR connect library failed to load.';
+    return;
+  }
+
+  try {
+    dAppConnect = new CardanoPeerConnect.DAppPeerConnect({
+      dAppInfo: {
+        name: 'Midnight Loadboard',
+        url: window.location.origin
+      },
+      onConnect: (address, walletInfo) => {
+        document.getElementById('qr-status').textContent =
+          'Connected to ' + (walletInfo?.name || 'wallet') + ' — checking credentials…';
+      },
+      onApiInject: (walletName, address) => {
+        // The wallet's CIP-30 API is now available at window.cardano[walletName].
+        // Reuse the exact same TCT-check flow already used for browser-extension wallets.
+        closeQRConnect();
+        connectInjectedWallet(walletName);
+      },
+      onDisconnect: () => {
+        document.getElementById('qr-status').textContent = 'Wallet disconnected.';
+      }
+    });
+
+    document.getElementById('qr-code-container').innerHTML = '';
+    dAppConnect.generateQRCode(document.getElementById('qr-code-container'));
+    document.getElementById('qr-status').textContent = 'Waiting for wallet to connect…';
+  } catch (e) {
+    document.getElementById('qr-status').textContent = 'Could not start QR connect: ' + e.message;
+  }
+}
+
+function closeQRConnect() {
+  document.getElementById('qr-modal').style.display = 'none';
+}
+
+// Shared logic for any wallet already injected into window.cardano[key] —
+// used by the QR-connect flow above.
+async function connectInjectedWallet(walletKey) {
+  setStatus('Connecting to ' + walletKey + '…');
+  const cardano = window.cardano;
+  if (!cardano || !cardano[walletKey]) {
+    setStatus('Wallet API not found after connect.', '#cf6679');
+    return;
+  }
+  let api;
+  try { api = await cardano[walletKey].enable(); }
+  catch (e) { setStatus('Connection rejected.', '#cf6679'); return; }
+  setStatus('Checking credentials…');
+  const policy = POLICIES[currentNetwork];
+  let addrDisplay = '';
+  try {
+    const addrs = await api.getUsedAddresses();
+    if (addrs && addrs.length > 0) {
+      const hex = addrs[0];
+      addrDisplay = hex.substring(0,12) + '…' + hex.substring(hex.length-8);
+    }
+  } catch(e){}
+  let hasTCT = false;
+  try {
+    const utxos = await api.getUtxos();
+    if (utxos && utxos.length > 0) {
+      for (const u of utxos) {
+        const s = typeof u === 'string' ? u : JSON.stringify(u);
+        if (s.includes(policy)) { hasTCT = true; break; }
+      }
+    }
+    try { const bal = await api.getBalance(); if (bal && bal.includes && bal.includes(policy)) hasTCT = true; } catch(e){}
+  } catch(e) { setStatus('Could not read UTxOs: ' + e.message, '#cf6679'); }
+  showDashboard(hasTCT, addrDisplay, walletKey, policy);
+}
+
+// ---- GameChanger Wallet (GCScript) integration ----
+async function connectGameChanger(){
+  const btn = document.getElementById('btn-gamechanger');
+  btn.disabled = true;
+  btn.textContent = 'Redirecting to GameChanger…';
+  try {
+    const { gc } = window;
+    if (!gc) { setStatus('GameChanger library failed to load.', '#cf6679'); btn.disabled=false; btn.textContent='Connect with GameChanger Wallet'; return; }
+    const gcscript = {
+      type: 'script',
+      title: 'Connect to Midnight Loadboard',
+      description: 'Share your wallet address to connect to Midnight Loadboard',
+      exportAs: 'connect',
+      run: {
+        address: { type: 'getCurrentAddress' },
+        stakePubKey: { type: 'getStakingPublicKey' }
+      }
+    };
+    const url = await gc.encode.url({
+      input: JSON.stringify(gcscript),
+      apiVersion: '2',
+      network: currentNetwork === 'preprod' ? 'preprod' : 'mainnet',
+      encoding: 'gzip'
+    });
+    window.location.href = url;
+  } catch(e) {
+    setStatus('GameChanger connect failed: ' + e.message, '#cf6679');
+    btn.disabled = false;
+    btn.textContent = 'Connect with GameChanger Wallet';
+  }
+}
+
+// On page load, check if we're returning from a GameChanger redirect
+(async function checkGameChangerReturn(){
+  const params = new URLSearchParams(window.location.search);
+  const resultRaw = params.get('result');
+  if (!resultRaw) return;
+  try {
+    const { gc } = window;
+    if (!gc) return;
+    const resultObj = await gc.encodings.msg.decoder(resultRaw);
+    const data = resultObj && resultObj.exports && resultObj.exports.connect;
+    if (data && data.address) {
+      const addrDisplay = data.address.substring(0,12) + '…' + data.address.substring(data.address.length-8);
+      // NOTE: GameChanger connections cannot yet auto-verify TCT holding via the
+      // documented API (getCurrentAddress / getStakingPublicKey only). Until an
+      // asset/balance-check intent is confirmed with GameChanger, these users
+      // land on the Broker/Shipper dashboard by default and can be manually
+      // upgraded once TCT is confirmed another way.
+      showDashboard(false, addrDisplay, 'GameChanger', POLICIES[currentNetwork]);
+      document.getElementById('cred-info').innerHTML =
+        '<div class="no-cred">⚠ Connected via GameChanger — TCT auto-verification for this wallet is not yet available. Contact us to confirm your credential manually.</div>';
+    }
+    // Clean the URL so refreshing doesn't re-process the result
+    window.history.replaceState({}, document.title, window.location.pathname);
+  } catch(e) {
+    console.error('Failed to decode GameChanger result', e);
+  }
+})();
+</script>
+</body>
+</html>
