@@ -200,10 +200,21 @@ async function confirmClaim() {
   try {
     const resp = await fetch(SUPABASE_URL + '/rest/v1/claims', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Prefer': 'return=minimal'},
-      body: JSON.stringify({ load_id: currentLoadId, route: route, rate: rate, carrier_name: name, carrier_email: email })
+      headers: {'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Prefer': 'return=representation'},
+      body: JSON.stringify({ load_id: currentLoadId, route: route, rate: rate, carrier_name: name, carrier_email: email, shipper_email: load ? load.shipper_email : null })
     });
     supabaseOk = resp.ok;
+    if(supabaseOk){
+      const created = await resp.json();
+      const claimId = created && created[0] && created[0].id;
+      if(claimId){
+        fetch(SUPABASE_URL + '/functions/v1/send-email', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},
+          body: JSON.stringify({ type: 'load_claimed', id: claimId })
+        }).catch(()=>{});
+      }
+    }
   } catch(e) {}
 
   // Also email via Formspree as an instant notification — keep this even if Supabase succeeds.
