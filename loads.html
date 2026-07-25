@@ -195,21 +195,30 @@ async function confirmClaim() {
   const route = load ? load.pickup + ' → ' + load.delivery : '';
   const rate = load ? load.rate : '';
 
-  // Guard against double-claiming: re-check the load is still open right before
-  // writing the claim, in case someone else claimed it in the last few seconds.
+  // Atomically claim the load via a database function (SECURITY DEFINER) rather
+  // than a client-side check-then-write. This closes the race window entirely —
+  // two carriers claiming at the same instant can't both succeed — and avoids
+  // needing broad anon UPDATE/SELECT access to the loads table.
   try {
-    const checkResp = await fetch(SUPABASE_URL + '/rest/v1/loads?id=eq.' + currentLoadId + '&select=status', {
-      headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY}
+    const claimResp = await fetch(SUPABASE_URL + '/rest/v1/rpc/claim_load', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY},
+      body: JSON.stringify({ p_load_id: currentLoadId })
     });
-    const checkData = await checkResp.json();
-    if (!checkData.length || checkData[0].status !== 'open') {
+    const claimed = claimResp.ok ? await claimResp.json() : false;
+    if (!claimed) {
       document.getElementById('claim-success').innerHTML = 'Sorry — this load was just claimed by another carrier. <a href="loads.html">Refresh the board</a> to see what\'s still available.';
       document.getElementById('claim-success').style.display = 'block';
       document.getElementById('modal-actions').innerHTML = '<button class="btn-modal-secondary" onclick="closeModal()">Close</button>';
       fetchLoads();
       return;
     }
-  } catch(e) {}
+  } catch(e) {
+    document.getElementById('claim-success').innerHTML = 'Something went wrong claiming this load. Please try again.';
+    document.getElementById('claim-success').style.display = 'block';
+    document.getElementById('modal-actions').innerHTML = '<button class="btn-modal-secondary" onclick="closeModal()">Close</button>';
+    return;
+  }
 
   // Write to Supabase so it shows up in the admin Claims tab.
   // We generate the id client-side (rather than reading it back from the insert
@@ -227,12 +236,6 @@ async function confirmClaim() {
     });
     supabaseOk = resp.ok;
     if(supabaseOk){
-      // Mark the load as claimed so it drops off the board and can't be double-claimed.
-      fetch(SUPABASE_URL + '/rest/v1/loads?id=eq.' + currentLoadId, {
-        method: 'PATCH',
-        headers: {'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY},
-        body: JSON.stringify({ status: 'claimed' })
-      }).catch(()=>{});
       fetch(SUPABASE_URL + '/functions/v1/send-email', {
         method: 'POST',
         headers: {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},
