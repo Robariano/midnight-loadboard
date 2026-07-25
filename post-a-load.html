@@ -67,7 +67,7 @@ label{font-size:12px;color:#555;font-weight:600;text-transform:uppercase;letter-
   <div class="form-card">
     <h3>Load Details</h3>
     <form id="load-form">
-      <input type="text" name="company_website" id="l-hp" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px;top:-9999px;opacity:0;height:0;width:0" aria-hidden="true"/>
+      <input type="text" name="hp_field_9f3k2x" id="l-hp" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px;top:-9999px;opacity:0;height:0;width:0" aria-hidden="true"/>
       <div class="form-row">
         <div><label>Pickup City &amp; State</label><input type="text" id="l-pickup" placeholder="e.g. Durango, CO" required/></div>
         <div><label>Delivery City &amp; State</label><input type="text" id="l-delivery" placeholder="e.g. Albuquerque, NM" required/></div>
@@ -109,6 +109,7 @@ label{font-size:12px;color:#555;font-weight:600;text-transform:uppercase;letter-
 const SUPABASE_URL = 'https://zfpznsxrwjhcmhcoseue.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_eGmZP2GZXxt6nnic_xfeKQ_OwjuTl0i';
 
+window.addEventListener('load', function(){ var hp = document.getElementById('l-hp'); if(hp) hp.value = ''; });
 document.getElementById('load-form').addEventListener('submit', async function(e){
   e.preventDefault();
   if(document.getElementById('l-hp').value){ return; } // honeypot — silently drop bot submissions
