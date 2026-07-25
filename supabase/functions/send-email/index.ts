@@ -10,6 +10,9 @@ const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const FROM_EMAIL = 'Midnight Loadboard <notifications@midnightloadboard.com>'
+// The sending domain can send but has no real inbox behind it — route replies
+// to Rob's actual email so a shipper/carrier hitting "Reply" doesn't bounce.
+const REPLY_TO = 'robertariano@gmail.com'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -64,7 +67,7 @@ Deno.serve(async (req: Request) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ from: FROM_EMAIL, to, subject, html }),
+      body: JSON.stringify({ from: FROM_EMAIL, to, subject, html, reply_to: REPLY_TO }),
     })
 
     if (!resendResp.ok) {
