@@ -147,6 +147,15 @@ const FMCSA_WEBKEY = 'b4ab30a460ce1e2fdfdb0f2aaf1c539b83bbc578';
 
 const authClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// Returns the logged-in admin's real session token so writes run as the
+// `authenticated` Postgres role (which RLS grants full access to) rather
+// than the public anon key, which is embedded in every page's client-side
+// JS and must stay restricted to only what unauthenticated visitors need.
+async function adminToken(){
+  const { data } = await authClient.auth.getSession();
+  return (data && data.session) ? data.session.access_token : SUPABASE_KEY;
+}
+
 // Fire-and-forget call to the send-email Edge Function. Never blocks the UI —
 // if it fails, the admin action itself still succeeded, this is just the notification.
 function notifyEmail(type, id){
@@ -209,7 +218,7 @@ async function postLoad(){
   if(!pickup||!delivery||!pickup_date||!equipment||!rate){alert('Fill in pickup, delivery, date, equipment, and rate.');return;}
   const resp=await fetch(SUPABASE_URL+'/rest/v1/loads',{
     method:'POST',
-    headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'},
+    headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+(await adminToken()),'Prefer':'return=minimal'},
     body:JSON.stringify({pickup,delivery,pickup_date,equipment,rate,weight:document.getElementById('weight').value,commodity:document.getElementById('commodity').value,payment:document.getElementById('payment').value,notes:document.getElementById('notes').value,status:'open'})
   });
   if(resp.ok){
@@ -223,7 +232,7 @@ async function postLoad(){
 }
 
 async function loadLoads(){
-  const resp=await fetch(SUPABASE_URL+'/rest/v1/loads?status=eq.open&order=created_at.desc',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+  const resp=await fetch(SUPABASE_URL+'/rest/v1/loads?status=eq.open&order=created_at.desc',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(await adminToken())}});
   const data=await resp.json();
   const el=document.getElementById('loads-list');
   if(!data.length){el.innerHTML='<div class="empty">No active loads.</div>';return;}
@@ -241,7 +250,7 @@ async function loadLoads(){
 
 async function deleteLoad(id){
   if(!confirm('Remove this load?'))return;
-  await fetch(SUPABASE_URL+'/rest/v1/loads?id=eq.'+id,{method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+  await fetch(SUPABASE_URL+'/rest/v1/loads?id=eq.'+id,{method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(await adminToken())}});
   loadLoads();
 }
 
@@ -298,7 +307,7 @@ async function checkFMCSA(dotMc, btn){
 }
 
 async function loadVerifications(){
-  const resp=await fetch(SUPABASE_URL+'/rest/v1/verifications?order=created_at.desc',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+  const resp=await fetch(SUPABASE_URL+'/rest/v1/verifications?order=created_at.desc',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(await adminToken())}});
   const data=await resp.json();
   const el=document.getElementById('verifications-list');
   if(!data.length){el.innerHTML='<div class="empty">No verification requests yet.</div>';return;}
@@ -335,7 +344,7 @@ async function updateVerification(id, status){
   if(!confirm('Are you sure you want to '+action+' this carrier?'))return;
   const resp=await fetch(SUPABASE_URL+'/rest/v1/verifications?id=eq.'+id,{
     method:'PATCH',
-    headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'},
+    headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+(await adminToken()),'Prefer':'return=minimal'},
     body:JSON.stringify({status})
   });
   if(resp.ok){
@@ -350,7 +359,7 @@ async function updateVerification(id, status){
 let allLoadRequests = [];
 
 async function loadRequests(){
-  const resp=await fetch(SUPABASE_URL+'/rest/v1/load_requests?order=created_at.desc',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+  const resp=await fetch(SUPABASE_URL+'/rest/v1/load_requests?order=created_at.desc',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(await adminToken())}});
   const data=await resp.json();
   allLoadRequests = data;
   const el=document.getElementById('requests-list');
@@ -380,7 +389,7 @@ async function publishLoadRequest(id){
   if(!confirm('Publish '+(r.pickup||'')+' → '+(r.delivery||'')+' to Browse Loads?')) return;
   const resp = await fetch(SUPABASE_URL+'/rest/v1/loads', {
     method: 'POST',
-    headers: {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'},
+    headers: {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+(await adminToken()),'Prefer':'return=minimal'},
     body: JSON.stringify({
       pickup: r.pickup, delivery: r.delivery, pickup_date: r.pickup_date, equipment: r.equipment,
       weight: r.weight, commodity: r.commodity, rate: r.rate, payment: r.payment, notes: r.notes,
@@ -392,7 +401,7 @@ async function publishLoadRequest(id){
   notifyEmail('load_published', id);
   await fetch(SUPABASE_URL+'/rest/v1/load_requests?id=eq.'+id, {
     method: 'PATCH',
-    headers: {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'},
+    headers: {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+(await adminToken()),'Prefer':'return=minimal'},
     body: JSON.stringify({ status: 'published' })
   });
   loadRequests();
@@ -400,7 +409,7 @@ async function publishLoadRequest(id){
 }
 
 async function loadClaims(){
-  const resp=await fetch(SUPABASE_URL+'/rest/v1/claims?order=created_at.desc',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+  const resp=await fetch(SUPABASE_URL+'/rest/v1/claims?order=created_at.desc',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(await adminToken())}});
   const data=await resp.json();
   const el=document.getElementById('claims-list');
   if(!data.length){el.innerHTML='<div class="empty">No claims yet.</div>';return;}
@@ -428,7 +437,7 @@ async function markDelivered(id){
   if(podLink === null) return; // cancelled
   const resp = await fetch(SUPABASE_URL+'/rest/v1/claims?id=eq.'+id, {
     method: 'PATCH',
-    headers: {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'},
+    headers: {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+(await adminToken()),'Prefer':'return=minimal'},
     body: JSON.stringify({ delivered_at: new Date().toISOString(), pod_link: podLink || null })
   });
   if(!resp.ok){ alert('Error marking delivered. Try again.'); return; }

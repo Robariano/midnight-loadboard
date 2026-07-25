@@ -195,6 +195,22 @@ async function confirmClaim() {
   const route = load ? load.pickup + ' → ' + load.delivery : '';
   const rate = load ? load.rate : '';
 
+  // Guard against double-claiming: re-check the load is still open right before
+  // writing the claim, in case someone else claimed it in the last few seconds.
+  try {
+    const checkResp = await fetch(SUPABASE_URL + '/rest/v1/loads?id=eq.' + currentLoadId + '&select=status', {
+      headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY}
+    });
+    const checkData = await checkResp.json();
+    if (!checkData.length || checkData[0].status !== 'open') {
+      document.getElementById('claim-success').innerHTML = 'Sorry — this load was just claimed by another carrier. <a href="loads.html">Refresh the board</a> to see what\'s still available.';
+      document.getElementById('claim-success').style.display = 'block';
+      document.getElementById('modal-actions').innerHTML = '<button class="btn-modal-secondary" onclick="closeModal()">Close</button>';
+      fetchLoads();
+      return;
+    }
+  } catch(e) {}
+
   // Write to Supabase so it shows up in the admin Claims tab.
   // We generate the id client-side (rather than reading it back from the insert
   // response) because RLS correctly blocks public SELECT on claims — carriers
@@ -211,6 +227,12 @@ async function confirmClaim() {
     });
     supabaseOk = resp.ok;
     if(supabaseOk){
+      // Mark the load as claimed so it drops off the board and can't be double-claimed.
+      fetch(SUPABASE_URL + '/rest/v1/loads?id=eq.' + currentLoadId, {
+        method: 'PATCH',
+        headers: {'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY},
+        body: JSON.stringify({ status: 'claimed' })
+      }).catch(()=>{});
       fetch(SUPABASE_URL + '/functions/v1/send-email', {
         method: 'POST',
         headers: {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},
