@@ -330,10 +330,12 @@ async function loadVerifications(){
       </div>
       ${v.notes?'<p style="margin-top:6px;font-size:12px;color:#555">Notes: '+v.notes+'</p>':''}
       <div class="row-footer">
-        <span style="font-size:12px;color:#555">${new Date(v.created_at).toLocaleDateString()}</span>
+        <span style="font-size:12px;color:#555">${new Date(v.created_at).toLocaleDateString()}${v.revoked?' · <span style=\"color:#cf6679\">REVOKED</span>':''}</span>
         <div style="display:flex;gap:8px">
           ${v.status!=='approved'?'<button class="btn-sm btn-approve" onclick="updateVerification(\''+v.id+'\',\'approved\')">✓ Approve</button>':''}
           ${v.status!=='rejected'?'<button class="btn-sm btn-reject" onclick="updateVerification(\''+v.id+'\',\'rejected\')">✗ Reject</button>':''}
+          ${v.status==='approved' && !v.revoked?'<button class="btn-sm btn-reject" onclick="revokeVerification(\''+v.id+'\')">⛔ Revoke</button>':''}
+          ${v.revoked?'<button class="btn-sm btn-approve" onclick="restoreVerification(\''+v.id+'\')">↺ Restore</button>':''}
         </div>
       </div>
     </div>`).join('');
@@ -354,6 +356,28 @@ async function updateVerification(id, status){
   } else {
     alert('Error updating status. Try again.');
   }
+}
+
+async function revokeVerification(id){
+  const reason = prompt('Reason for revoking this carrier (shown publicly on the Revoked Credentials page):');
+  if(reason===null) return; // cancelled
+  if(!confirm('Revoke this carrier\'s credential? This is public and immediate.'))return;
+  const resp=await fetch(SUPABASE_URL+'/rest/v1/verifications?id=eq.'+id,{
+    method:'PATCH',
+    headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+(await adminToken()),'Prefer':'return=minimal'},
+    body:JSON.stringify({revoked:true, revoked_reason:reason||'Credential revoked', revoked_at:new Date().toISOString()})
+  });
+  if(resp.ok){ loadVerifications(); } else { alert('Error revoking. Try again.'); }
+}
+
+async function restoreVerification(id){
+  if(!confirm('Restore this carrier\'s credential? They will be removed from the public Revoked list.'))return;
+  const resp=await fetch(SUPABASE_URL+'/rest/v1/verifications?id=eq.'+id,{
+    method:'PATCH',
+    headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+(await adminToken()),'Prefer':'return=minimal'},
+    body:JSON.stringify({revoked:false, revoked_reason:null})
+  });
+  if(resp.ok){ loadVerifications(); } else { alert('Error restoring. Try again.'); }
 }
 
 let allLoadRequests = [];
