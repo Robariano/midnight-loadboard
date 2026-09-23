@@ -120,7 +120,16 @@ document.getElementById('verify-form').addEventListener('submit', async function
   const btn = this.querySelector('.btn-submit');
   btn.textContent = 'Submitting…';
   btn.disabled = true;
+  // Generated client-side so we already know this row's id without having
+  // to read it back after insert — reading it back would depend on an RLS
+  // SELECT policy for the anon role that this repo doesn't have on record
+  // (see verifications_revocation.sql's note on the same thing), and a
+  // fresh row is status='pending', which the one visible policy we do have
+  // doesn't cover. Supabase's verifications.id column takes a client-
+  // supplied uuid fine (it only DEFAULTs to a generated one when omitted).
+  const newId = crypto.randomUUID();
   const body = {
+    id: newId,
     name: document.getElementById('v-name').value,
     email: document.getElementById('v-email').value,
     phone: document.getElementById('v-phone').value,
@@ -151,6 +160,18 @@ document.getElementById('verify-form').addEventListener('submit', async function
       }),
       headers: {'Content-Type': 'application/json', 'Accept': 'application/json'}
     }).catch(()=>{});
+    // Kick off the FMCSA check right away so it's already sitting on this
+    // record by the time an admin opens the Verifications tab. Ok to fail
+    // silently — the admin panel's "Check FMCSA →" button can always
+    // run/re-run it manually. Not awaited: don't make the visitor wait on
+    // FMCSA's API just to see the "submitted" confirmation.
+    if(body.dot_mc){
+      fetch(SUPABASE_URL + '/functions/v1/check-fmcsa', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},
+        body: JSON.stringify({ dot_mc: body.dot_mc, id: newId })
+      }).catch(function(){});
+    }
   } else {
     btn.textContent='Try Again';
     btn.disabled=false;

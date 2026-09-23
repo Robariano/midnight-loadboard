@@ -142,8 +142,10 @@ label{font-size:12px;color:#555;font-weight:600;text-transform:uppercase;letter-
 <script>
 const SUPABASE_URL = 'https://zfpznsxrwjhcmhcoseue.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_eGmZP2GZXxt6nnic_xfeKQ_OwjuTl0i';
-// Free FMCSA QCMobile API key — register at https://mobile.fmcsa.dot.gov/QCDevsite/docs/getStarted
-const FMCSA_WEBKEY = 'b4ab30a460ce1e2fdfdb0f2aaf1c539b83bbc578';
+// FMCSA lookups run server-side now (check-fmcsa Edge Function) — the
+// webKey lives only as a Supabase secret, never in this client-side file.
+// (A real key used to be hardcoded right here, readable by anyone viewing
+// this public page's source — rotate that old key if you haven't already.)
 
 const authClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -254,55 +256,50 @@ async function deleteLoad(id){
   loadLoads();
 }
 
-async function checkFMCSA(dotMc, btn){
-  const resultEl = btn.closest('.row-card').querySelector('.fmcsa-result');
-  if(!FMCSA_WEBKEY || FMCSA_WEBKEY === 'PASTE_YOUR_FMCSA_WEBKEY_HERE'){
-    resultEl.style.color = '#cf6679';
-    resultEl.textContent = 'No FMCSA webKey set — register free at mobile.fmcsa.dot.gov/QCDevsite/docs/getStarted and paste it into admin.html.';
+// Renders a saved (or freshly returned) FMCSA result into a row's
+// .fmcsa-result element. `result` uses the same field names as the
+// verifications table columns (see verifications_fmcsa_check.sql) —
+// whether it came from a DB row or straight back from the Edge Function.
+function renderFmcsaResult(resultEl, result){
+  if(!result || !result.fmcsa_lookup_status){
+    resultEl.style.color = '#555';
+    resultEl.textContent = 'Not checked yet.';
     return;
   }
+  const ok = result.fmcsa_lookup_status === 'ok';
+  const clear = ok && result.allowed_to_operate !== 'N' && result.out_of_service !== 'Y' && result.has_active_for_hire_authority === 'Y';
+  resultEl.style.color = clear ? '#4caf50' : '#cf6679';
+  const checkedAt = result.fmcsa_checked_at ? new Date(result.fmcsa_checked_at).toLocaleString() : '';
+  resultEl.innerHTML = (clear ? '✓ ' : '⚠ ') + (result.fmcsa_verdict || '') +
+    (checkedAt ? '<br><span style="color:#555;font-size:11px">Checked ' + checkedAt + '</span>' : '');
+}
+
+async function checkFMCSA(dotMc, btn){
+  const resultEl = btn.closest('.row-card').querySelector('.fmcsa-result');
+  const id = btn.getAttribute('data-verification-id');
   btn.disabled = true;
   btn.textContent = 'Checking…';
   resultEl.style.color = '#888';
   resultEl.textContent = 'Looking up FMCSA record…';
   try {
-    // dot_mc field is free text — pull the first run of digits out as a DOT number.
-    // If it looks like an MC/docket number instead, fall back to the docket-number endpoint.
-    const isMC = /mc/i.test(dotMc) && !/dot/i.test(dotMc);
-    const digits = (dotMc.match(/\d+/) || [null])[0];
-    if(!digits){
-      resultEl.style.color = '#cf6679';
-      resultEl.textContent = 'Could not find a number in "' + dotMc + '" to look up.';
-      return;
-    }
-    const url = isMC
-      ? 'https://mobile.fmcsa.dot.gov/qc/services/carriers/docket-number/' + digits + '?webKey=' + FMCSA_WEBKEY
-      : 'https://mobile.fmcsa.dot.gov/qc/services/carriers/' + digits + '?webKey=' + FMCSA_WEBKEY;
-    const resp = await fetch(url);
-    if(!resp.ok){
-      resultEl.style.color = '#cf6679';
-      resultEl.textContent = 'FMCSA lookup failed (HTTP ' + resp.status + '). Number may not exist, or the webKey is invalid.';
-      return;
-    }
+    const resp = await fetch(SUPABASE_URL + '/functions/v1/check-fmcsa', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},
+      body: JSON.stringify({ dot_mc: dotMc, id })
+    });
     const data = await resp.json();
-    const carrier = (data.content && (data.content.carrier || (Array.isArray(data.content) && data.content[0] && data.content[0].carrier))) || null;
-    if(!carrier){
+    if(!resp.ok || !data.ok){
       resultEl.style.color = '#cf6679';
-      resultEl.textContent = 'No FMCSA record found for ' + digits + '.';
+      resultEl.textContent = 'FMCSA lookup failed: ' + (data.error || ('HTTP ' + resp.status));
       return;
     }
-    const authOk = carrier.allowedToOperate === 'Y' || carrier.allowedToOperate === true;
-    resultEl.style.color = authOk ? '#4caf50' : '#cf6679';
-    resultEl.textContent = (authOk ? '✓ ' : '⚠ ') + (carrier.legalName || carrier.dbaName || 'Carrier') +
-      ' · DOT ' + (carrier.dotNumber || digits) +
-      ' · Authority: ' + (authOk ? 'Active' : (carrier.allowedToOperate || 'Not confirmed active')) +
-      (carrier.statusCode ? ' · Status: ' + carrier.statusCode : '');
+    renderFmcsaResult(resultEl, data.result);
   } catch(e) {
     resultEl.style.color = '#cf6679';
-    resultEl.textContent = 'FMCSA lookup errored — this can happen if the FMCSA API blocks browser requests (no CORS header). If so, this check needs to run from a small server-side proxy instead of directly from the browser.';
+    resultEl.textContent = 'FMCSA lookup errored — network issue reaching the check-fmcsa function.';
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Check FMCSA →';
+    btn.textContent = 'Re-check FMCSA →';
   }
 }
 
@@ -319,9 +316,9 @@ async function loadVerifications(){
       </div>
       <p>${v.email||''} · ${v.phone||''}</p>
       <p>CDL: <strong style="color:#e0e0e0">${v.cdl_class||'—'}</strong> · DOT/MC: <strong style="color:#e0e0e0">${v.dot_mc||'—'}</strong>
-        ${v.dot_mc?' <button class="btn-sm btn-approve" style="margin-left:6px" onclick="checkFMCSA('+"'"+v.dot_mc.replace(/'/g,"\\'")+"'"+',this)">Check FMCSA →</button>':''}
+        ${v.dot_mc?' <button class="btn-sm btn-approve" style="margin-left:6px" data-verification-id="'+v.id+'" onclick="checkFMCSA('+"'"+v.dot_mc.replace(/'/g,"\\'")+"'"+',this)">'+(v.fmcsa_lookup_status?'Re-check FMCSA →':'Check FMCSA →')+'</button>':''}
       </p>
-      <div class="fmcsa-result" style="font-size:12px;color:#888;margin-top:2px"></div>
+      <div class="fmcsa-result" style="font-size:12px;color:#888;margin-top:2px" data-fmcsa-init="${v.fmcsa_lookup_status?'1':'0'}"></div>
       <p>Equipment: ${v.equipment||'—'}</p>
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
         ${v.cdl_link?'<a href="'+v.cdl_link+'" target="_blank">📄 CDL →</a>':''}
@@ -339,6 +336,13 @@ async function loadVerifications(){
         </div>
       </div>
     </div>`).join('');
+  // Populate the already-saved FMCSA result (from auto-check on submission,
+  // or a prior manual check) into each row now that the cards exist in the
+  // DOM — done as a pass after render rather than inline in the template
+  // above since it needs the renderFmcsaResult() formatting helper.
+  el.querySelectorAll('.fmcsa-result').forEach(function(resultEl, i){
+    if(resultEl.getAttribute('data-fmcsa-init') === '1') renderFmcsaResult(resultEl, data[i]);
+  });
 }
 
 async function updateVerification(id, status){
