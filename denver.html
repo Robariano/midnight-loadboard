@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Denver Hub — Midnight Loadboard</title>
+<meta name="description" content="Open loads picking up in Colorado, posted by shippers and covered by verified carriers."/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a12;color:#e0e0e0;font-family:Helvetica,Arial,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+header{width:100%;background:#12121e;border-bottom:1px solid #2a2a3e;padding:16px 32px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{font-size:20px;font-weight:700;color:#fff;letter-spacing:0.5px}
+.header-nav{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.header-registry{font-size:12px;font-weight:700;color:#888;text-decoration:none;border:1px solid #2a2a3e;border-radius:6px;padding:5px 12px}
+.header-registry:hover{background:#1a1a2e;color:#e0e0e0}
+.header-post{font-size:12px;font-weight:700;color:#5c5cff;text-decoration:none;border:1px solid #5c5cff;border-radius:6px;padding:5px 12px}
+.header-post:hover{background:#1a1a3a}
+.header-verify{font-size:12px;font-weight:700;color:#4caf50;text-decoration:none;border:1px solid #4caf50;border-radius:6px;padding:5px 12px}
+.header-verify:hover{background:#0f1a0f}
+
+.hero{width:100%;max-width:900px;padding:72px 24px 40px;text-align:center}
+.hero-badge{display:inline-block;background:#1a1a2a;border:1px solid #4caf50;border-radius:20px;padding:6px 18px;font-size:12px;font-weight:700;color:#4caf50;margin-bottom:24px;letter-spacing:0.5px}
+.hero h2{font-size:46px;font-weight:800;color:#fff;margin-bottom:16px;line-height:1.15}
+.hero h2 span{color:#4caf50}
+.hero p{color:#888;font-size:17px;line-height:1.7;max-width:600px;margin:0 auto 36px}
+.hero-actions{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.btn-primary{background:#5c5cff;color:#fff;font-size:16px;font-weight:700;padding:15px 32px;border-radius:8px;text-decoration:none;border:none;cursor:pointer;display:inline-block}
+.btn-primary:hover{background:#7070ff}
+.btn-secondary{background:transparent;color:#4caf50;font-size:16px;font-weight:700;padding:15px 32px;border-radius:8px;text-decoration:none;border:2px solid #4caf50;display:inline-block}
+.btn-secondary:hover{background:#0f1a0f}
+
+.corridors{width:100%;max-width:900px;padding:8px 24px 56px;border-bottom:1px solid #1a1a2e}
+.corridors-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.corridor{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:20px}
+.corridor-shield{display:inline-block;font-size:13px;font-weight:800;color:#fff;background:#1a1a3a;border:1px solid #5c5cff;border-radius:6px;padding:3px 10px;margin-bottom:10px;letter-spacing:0.5px}
+.corridor h4{font-size:15px;font-weight:700;color:#fff;margin-bottom:6px}
+.corridor p{font-size:13px;color:#888;line-height:1.6}
+
+.section{width:100%;max-width:900px;padding:56px 24px}
+.section-badge{display:inline-block;background:#1a1a2a;border:1px solid #5c5cff;border-radius:20px;padding:5px 16px;font-size:12px;font-weight:700;color:#5c5cff;margin-bottom:16px}
+.section h3{font-size:28px;font-weight:800;color:#fff;margin-bottom:12px}
+.section > p{color:#888;font-size:15px;line-height:1.7;max-width:600px;margin-bottom:28px}
+.board-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.board-count{font-size:13px;color:#555}
+.board-count b{color:#4caf50}
+
+.loads-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.load-card{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:24px;min-width:0}
+.load-route{font-size:18px;font-weight:700;color:#fff;margin-bottom:10px;overflow-wrap:anywhere}
+.load-tags{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.tag{font-size:12px;color:#888;border:1px solid #2a2a3e;border-radius:4px;padding:2px 10px}
+.load-details{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;font-size:13px;margin-bottom:14px}
+.load-label{color:#555;font-weight:600;text-transform:uppercase;font-size:11px;letter-spacing:0.5px}
+.load-val{color:#e0e0e0;overflow-wrap:anywhere}
+.load-rate{font-size:22px;font-weight:800;color:#4caf50;margin-bottom:12px}
+.btn-claim{display:inline-block;font-size:13px;font-weight:700;color:#fff;background:#5c5cff;border-radius:6px;padding:8px 16px;text-decoration:none}
+.btn-claim:hover{background:#7070ff}
+.empty-state{text-align:center;padding:40px 24px;color:#555;font-size:15px;line-height:1.7;background:#12121e;border:1px dashed #2a2a3e;border-radius:12px}
+.empty-state a{color:#4caf50;font-weight:600;text-decoration:none}
+
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.panel{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:28px}
+.panel h4{font-size:18px;font-weight:800;color:#fff;margin-bottom:10px}
+.panel p{font-size:14px;color:#888;line-height:1.7;margin-bottom:18px}
+.panel ul{list-style:none;margin-bottom:20px;display:grid;gap:8px}
+.panel li{font-size:14px;color:#e0e0e0;padding-left:20px;position:relative;line-height:1.5}
+.panel li::before{content:"✓";position:absolute;left:0;color:#4caf50;font-weight:700}
+.panel .btn-primary,.panel .btn-secondary{font-size:14px;padding:12px 22px}
+
+.footer{width:100%;background:#12121e;border-top:1px solid #1a1a2e;padding:24px 32px;text-align:center;margin-top:auto}
+.footer p{font-size:13px;color:#555}
+.footer a{color:#888;text-decoration:none}
+.footer a:hover{color:#e0e0e0}
+a:focus-visible,button:focus-visible{outline:2px solid #4caf50;outline-offset:2px}
+
+@media(max-width:700px){
+  header{padding:12px 16px}
+  header h1{font-size:16px}
+  .header-nav{gap:6px}
+  .header-registry,.header-post,.header-verify{font-size:11px;padding:4px 8px}
+  .hero{padding:44px 16px 28px}
+  .hero h2{font-size:32px}
+  .hero p{font-size:15px}
+  .corridors-grid,.loads-grid,.split{grid-template-columns:1fr}
+  .corridors,.section{padding-left:16px;padding-right:16px}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1><a href="index.html" style="color:#fff;text-decoration:none;">Midnight Loadboard</a></h1>
+  <div class="header-nav">
+    <a href="loads.html" class="header-registry">Browse Loads</a>
+    <a href="confirm-coverage.html" class="header-registry" style="color:#f5c86b;border-color:#4a3a1a;">Confirm Coverage</a>
+    <a href="carriers.html" class="header-registry">Carriers</a>
+    <a href="post-a-load.html" class="header-post">Post a Load</a>
+    <a href="get-verified.html" class="header-verify">Get Verified</a>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-badge">DENVER HUB · COLORADO FREIGHT</div>
+  <h2>Colorado freight.<br/><span>Verified carriers.</span></h2>
+  <p>The Denver Hub shows every open load picking up in Colorado. Shippers post once, verified carriers claim directly, and drivers can confirm their own insurance coverage before the truck leaves the dock.</p>
+  <div class="hero-actions">
+    <a href="#board" class="btn-primary">See Colorado Loads</a>
+    <a href="post-a-load.html" class="btn-secondary">Post a Colorado Load</a>
+  </div>
+</div>
+
+<div class="corridors">
+  <div class="corridors-grid">
+    <div class="corridor">
+      <span class="corridor-shield">I-25</span>
+      <h4>North–South</h4>
+      <p>Cheyenne and Wyoming to the north. Colorado Springs, Pueblo, New Mexico and Texas to the south.</p>
+    </div>
+    <div class="corridor">
+      <span class="corridor-shield">I-70</span>
+      <h4>East–West</h4>
+      <p>Kansas City and the Midwest to the east. Grand Junction, Utah and the West Coast to the west.</p>
+    </div>
+    <div class="corridor">
+      <span class="corridor-shield">I-76</span>
+      <h4>Northeast</h4>
+      <p>Sterling, Nebraska and I-80 toward Omaha and Chicago.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="board">
+  <div class="section-badge">Open Loads</div>
+  <div class="board-head">
+    <h3>Loads picking up in Colorado</h3>
+    <span class="board-count" id="co-count">Loading…</span>
+  </div>
+  <div class="loads-grid" id="co-grid"></div>
+</div>
+
+<div class="section" style="padding-top:0">
+  <div class="split">
+    <div class="panel">
+      <div class="section-badge" style="border-color:#4caf50;color:#4caf50">For Carriers</div>
+      <h4>Empty near Denver?</h4>
+      <p>Get verified once and claim Colorado loads directly from the shipper.</p>
+      <ul>
+        <li>Free verification of CDL, insurance and authority</li>
+        <li>Rate confirmation before pickup</li>
+        <li>Free private check that your driver is covered on the policy</li>
+      </ul>
+      <a href="get-verified.html" class="btn-secondary">Get Verified</a>
+    </div>
+    <div class="panel">
+      <div class="section-badge">For Shippers</div>
+      <h4>Shipping out of Colorado?</h4>
+      <p>Post your load and it shows on the Denver Hub and the main board for verified carriers.</p>
+      <ul>
+        <li>Carriers are checked before they can claim</li>
+        <li>Revoked carriers are listed publicly</li>
+        <li>You confirm details directly with whoever claims</li>
+      </ul>
+      <a href="post-a-load.html" class="btn-primary">Post a Load</a>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <p>Midnight Loadboard · <a href="index.html">Home</a> · <a href="loads.html">All Loads</a> · <a href="revoked-credentials.html">Revoked Credentials</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · Built in Durango, CO</p>
+</footer>
+
+<script>
+const SUPABASE_URL = 'https://zfpznsxrwjhcmhcoseue.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_eGmZP2GZXxt6nnic_xfeKQ_OwjuTl0i';
+
+function esc(v) {
+  return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// A load counts as Colorado freight when its pickup ends in ", CO" or names Colorado.
+function isColorado(pickup) {
+  const p = String(pickup || '').trim().toLowerCase();
+  return /,\s*co\.?$/.test(p) || /\bcolorado\b/.test(p);
+}
+
+async function fetchColoradoLoads() {
+  const grid = document.getElementById('co-grid');
+  const count = document.getElementById('co-count');
+  try {
+    const resp = await fetch(SUPABASE_URL + '/rest/v1/loads?status=eq.open&order=created_at.desc', {
+      headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY}
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const loads = (await resp.json()).filter(l => isColorado(l.pickup));
+    count.innerHTML = '<b>' + loads.length + '</b> open ' + (loads.length === 1 ? 'load' : 'loads');
+    if (!loads.length) {
+      grid.style.display = 'block';
+      grid.innerHTML = '<div class="empty-state">No Colorado loads are open right now.<br/>Shipping out of Colorado? <a href="post-a-load.html">Post a load</a> and verified carriers will see it here.</div>';
+      return;
+    }
+    grid.style.display = 'grid';
+    grid.innerHTML = loads.map(l => `
+      <div class="load-card">
+        <div class="load-route">${esc(l.pickup)} → ${esc(l.delivery)}</div>
+        <div class="load-tags">
+          ${l.equipment ? '<span class="tag">' + esc(l.equipment) + '</span>' : ''}
+          ${l.commodity ? '<span class="tag">' + esc(l.commodity) + '</span>' : ''}
+        </div>
+        <div class="load-details">
+          ${l.weight ? '<span class="load-label">Weight</span><span class="load-val">' + esc(l.weight) + '</span>' : ''}
+          ${l.pickup_date ? '<span class="load-label">Pickup</span><span class="load-val">' + esc(l.pickup_date) + '</span>' : ''}
+          ${l.notes ? '<span class="load-label">Notes</span><span class="load-val">' + esc(l.notes) + '</span>' : ''}
+        </div>
+        ${l.rate ? '<div class="load-rate">' + esc(l.rate) + '</div>' : ''}
+        <a class="btn-claim" href="loads.html">Claim on the Load Board →</a>
+      </div>`).join('');
+  } catch (e) {
+    count.textContent = '';
+    grid.style.display = 'block';
+    grid.innerHTML = '<div class="empty-state">Could not load Colorado freight right now. <a href="loads.html">Open the main board</a> or refresh in a minute.</div>';
+  }
+}
+
+fetchColoradoLoads();
+</script>
+</body>
+</html>
