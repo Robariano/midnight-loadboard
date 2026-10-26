@@ -44,6 +44,9 @@ header h1{font-size:20px;font-weight:700;color:#fff;letter-spacing:0.5px}
 .board-count{font-size:13px;color:#555}
 .board-count b{color:#4caf50}
 
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.filter-btn{background:transparent;color:#888;font-size:13px;font-weight:600;padding:6px 16px;border:1px solid #2a2a3e;border-radius:20px;cursor:pointer;font-family:inherit}
+.filter-btn.active{background:#1e1e3a;color:#5c5cff;border-color:#5c5cff}
 .loads-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
 .load-card{background:#12121e;border:1px solid #2a2a3e;border-radius:12px;padding:24px;min-width:0}
 .load-route{font-size:18px;font-weight:700;color:#fff;margin-bottom:10px;overflow-wrap:anywhere}
@@ -101,7 +104,7 @@ a:focus-visible,button:focus-visible{outline:2px solid #4caf50;outline-offset:2p
 <div class="hero">
   <div class="hero-badge">DENVER HUB · COLORADO FREIGHT</div>
   <h2>Colorado freight.<br/><span>Verified carriers.</span></h2>
-  <p>The Denver Hub shows every open load picking up in Colorado. Shippers post once, verified carriers claim directly, and drivers can confirm their own insurance coverage before the truck leaves the dock.</p>
+  <p>The Denver Hub shows every open load picking up in Colorado, with a spotlight on hotshots and cargo vans. Shippers post once, verified carriers claim directly, and drivers can confirm their own insurance coverage before the truck leaves the dock.</p>
   <div class="hero-actions">
     <a href="#board" class="btn-primary">See Colorado Loads</a>
     <a href="post-a-load.html" class="btn-secondary">Post a Colorado Load</a>
@@ -128,11 +131,45 @@ a:focus-visible,button:focus-visible{outline:2px solid #4caf50;outline-offset:2p
   </div>
 </div>
 
-<div class="section" id="board">
+<div class="section">
+  <div class="section-badge" style="border-color:#f5c86b;color:#f5c86b">Small Trucks, Big Hub</div>
+  <h3>Why hotshots and cargo vans fit Denver</h3>
+  <p>Not every Colorado load needs a 53-foot trailer. A lot of Front Range freight is urgent, partial, or headed somewhere a big rig can't get to quickly. That's work sized for hotshots and cargo vans.</p>
+  <div class="split">
+    <div class="panel">
+      <span class="corridor-shield" style="border-color:#f5c86b">HOTSHOT</span>
+      <h4>Pickup + flatbed, moving now</h4>
+      <p>Oil and gas fields in Weld County, construction and equipment work along the Front Range, and mountain towns west on I-70 all need parts, pipe, tools and materials moved fast.</p>
+      <ul>
+        <li>Time-critical partial flatbed loads</li>
+        <li>Equipment and parts runs to job sites</li>
+        <li>Mountain deliveries where a smaller rig is faster</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <span class="corridor-shield" style="border-color:#f5c86b">CARGO VAN</span>
+      <h4>Expedited and partial freight</h4>
+      <p>Denver's warehouses and distribution centers ship plenty of freight that fills a few pallets, not a trailer: parts, medical supplies, e-commerce, and anything that has to go today.</p>
+      <ul>
+        <li>Same-day and next-day runs across the region</li>
+        <li>1–4 pallet loads that don't justify a semi</li>
+        <li>Long runs out of Denver to anywhere in the lower 48</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="board" style="padding-top:0">
   <div class="section-badge">Open Loads</div>
   <div class="board-head">
     <h3>Loads picking up in Colorado</h3>
     <span class="board-count" id="co-count">Loading…</span>
+  </div>
+  <div class="filters" role="group" aria-label="Filter by truck type">
+    <button class="filter-btn active" type="button" data-filter="all">All trucks</button>
+    <button class="filter-btn" type="button" data-filter="Hotshot">Hotshot</button>
+    <button class="filter-btn" type="button" data-filter="Cargo / Sprinter Van">Cargo / Sprinter Van</button>
+    <button class="filter-btn" type="button" data-filter="big">Semi loads</button>
   </div>
   <div class="loads-grid" id="co-grid"></div>
 </div>
@@ -182,23 +219,29 @@ function isColorado(pickup) {
   return /,\s*co\.?$/.test(p) || /\bcolorado\b/.test(p);
 }
 
-async function fetchColoradoLoads() {
+let coLoads = [];
+let coFilter = 'all';
+const SMALL = ['Hotshot', 'Cargo / Sprinter Van'];
+
+function matchesFilter(l) {
+  if (coFilter === 'all') return true;
+  if (coFilter === 'big') return !SMALL.includes(l.equipment);
+  return l.equipment === coFilter;
+}
+
+function renderColorado() {
   const grid = document.getElementById('co-grid');
   const count = document.getElementById('co-count');
-  try {
-    const resp = await fetch(SUPABASE_URL + '/rest/v1/loads?status=eq.open&order=created_at.desc', {
-      headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY}
-    });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const loads = (await resp.json()).filter(l => isColorado(l.pickup));
-    count.innerHTML = '<b>' + loads.length + '</b> open ' + (loads.length === 1 ? 'load' : 'loads');
-    if (!loads.length) {
-      grid.style.display = 'block';
-      grid.innerHTML = '<div class="empty-state">No Colorado loads are open right now.<br/>Shipping out of Colorado? <a href="post-a-load.html">Post a load</a> and verified carriers will see it here.</div>';
-      return;
-    }
-    grid.style.display = 'grid';
-    grid.innerHTML = loads.map(l => `
+  const loads = coLoads.filter(matchesFilter);
+  count.innerHTML = '<b>' + loads.length + '</b> open ' + (loads.length === 1 ? 'load' : 'loads');
+  if (!loads.length) {
+    grid.style.display = 'block';
+    const what = coFilter === 'all' ? 'Colorado loads' : coFilter === 'big' ? 'semi loads out of Colorado' : coFilter + ' loads out of Colorado';
+    grid.innerHTML = '<div class="empty-state">No ' + esc(what) + ' are open right now.<br/>Shipping out of Colorado? <a href="post-a-load.html">Post a load</a> and verified carriers will see it here.</div>';
+    return;
+  }
+  grid.style.display = 'grid';
+  grid.innerHTML = loads.map(l => `
       <div class="load-card">
         <div class="load-route">${esc(l.pickup)} → ${esc(l.delivery)}</div>
         <div class="load-tags">
@@ -213,6 +256,27 @@ async function fetchColoradoLoads() {
         ${l.rate ? '<div class="load-rate">' + esc(l.rate) + '</div>' : ''}
         <a class="btn-claim" href="loads.html">Claim on the Load Board →</a>
       </div>`).join('');
+}
+
+document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn[data-filter]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    coFilter = btn.dataset.filter;
+    renderColorado();
+  });
+});
+
+async function fetchColoradoLoads() {
+  const grid = document.getElementById('co-grid');
+  const count = document.getElementById('co-count');
+  try {
+    const resp = await fetch(SUPABASE_URL + '/rest/v1/loads?status=eq.open&order=created_at.desc', {
+      headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY}
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    coLoads = (await resp.json()).filter(l => isColorado(l.pickup));
+    renderColorado();
   } catch (e) {
     count.textContent = '';
     grid.style.display = 'block';
